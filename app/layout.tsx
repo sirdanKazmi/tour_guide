@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,32 +25,40 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className="light">
       <head>
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              try {
-                const savedDarkMode = localStorage.getItem('darkMode');
-                if (savedDarkMode === 'true') {
-                  document.documentElement.classList.add('dark');
-                } else if (savedDarkMode === 'false') {
-                  document.documentElement.classList.remove('dark');
-                } else {
-                  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                  if (prefersDark) {
-                    document.documentElement.classList.add('dark');
+              (function() {
+                try {
+                  const savedDarkMode = localStorage.getItem('darkMode');
+                  const html = document.documentElement;
+                  if (savedDarkMode === 'true') {
+                    html.classList.remove('light');
+                    html.classList.add('dark');
+                  } else if (savedDarkMode === 'false') {
+                    html.classList.remove('dark');
+                    html.classList.add('light');
+                  } else {
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (prefersDark) {
+                      html.classList.remove('light');
+                      html.classList.add('dark');
+                    }
                   }
-                }
-              } catch (e) {}
+                } catch (e) {}
+              })();
             `,
           }}
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-300`}
       >
+        <Navigation />
         {children}
+        <Footer />
       </body>
     </html>
   );

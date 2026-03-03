@@ -1,8 +1,5 @@
-'use client';
+import { redirect } from 'next/navigation';
 
-import AboutPageComponent from '@/components/AboutPage';
-import { initialData } from '@/lib/data';
-
-export default function AboutPage() {
-  return <AboutPageComponent data={initialData} />;
+export default function AboutRoute() {
+  redirect('/');
 }

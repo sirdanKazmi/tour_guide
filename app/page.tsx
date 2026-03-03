@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Navigation from '@/components/Navigation';
 import AboutPageComponent from '@/components/AboutPage';
 import DestinationsPageComponent from '@/components/DestinationsPage';
@@ -30,11 +31,14 @@ export default function TouristGuideWebsite() {
 
   // Apply dark mode and save to localStorage
   useEffect(() => {
+    const html = document.documentElement;
     if (darkMode) {
-      document.documentElement.classList.add('dark');
+      html.classList.remove('light');
+      html.classList.add('dark');
       localStorage.setItem('darkMode', 'true');
     } else {
-      document.documentElement.classList.remove('dark');
+      html.classList.remove('dark');
+      html.classList.add('light');
       localStorage.setItem('darkMode', 'false');
     }
   }, [darkMode]);
@@ -43,9 +47,33 @@ export default function TouristGuideWebsite() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentPage]);
 
+  const pageVariants = {
+    initial: { opacity: 0, y: 20, scale: 0.98 },
+    animate: { opacity: 1, y: 0, scale: 1 },
+    exit: { opacity: 0, y: -20, scale: 0.98 },
+  };
+
+  const renderPage = () => {
+    switch (currentPage) {
+      case 'Home':
+        return <HomePage data={data} setCurrentPage={setCurrentPage} />;
+      case 'About':
+        return <AboutPageComponent data={data} />;
+      case 'Destinations':
+        return <DestinationsPageComponent data={data} />;
+      case 'Videos':
+        return <VideoGallery setCurrentPage={setCurrentPage} />;
+      case 'Gallery':
+        return <GalleryPageComponent data={data} />;
+      case 'Contact':
+        return <ContactPageComponent data={data} />;
+      default:
+        return <HomePage data={data} setCurrentPage={setCurrentPage} />;
+    }
+  };
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
+    <div className="min-h-screen bg-white dark:bg-slate-900 transition-colors duration-300">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;900&display=swap');
         
@@ -55,36 +83,6 @@ export default function TouristGuideWebsite() {
         
         h1, h2, h3 {
           font-family: 'Playfair Display', serif;
-        }
-        
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translateY(40px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        .animate-fadeIn {
-          animation: fadeIn 0.8s ease-out forwards;
-        }
-        
-        .animate-slideUp {
-          animation: slideUp 1s ease-out forwards;
         }
         
         html {
@@ -100,12 +98,21 @@ export default function TouristGuideWebsite() {
       />
 
       <main className="bg-white dark:bg-slate-900 transition-colors duration-300">
-        {currentPage === 'Home' && <HomePage data={data} setCurrentPage={setCurrentPage} />}
-        {currentPage === 'About' && <AboutPageComponent data={data} />}
-        {currentPage === 'Destinations' && <DestinationsPageComponent data={data} />}
-        {currentPage === 'Videos' && <VideoGallery setCurrentPage={setCurrentPage} />}
-        {currentPage === 'Gallery' && <GalleryPageComponent data={data} />}
-        {currentPage === 'Contact' && <ContactPageComponent data={data} />}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentPage}
+            variants={pageVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={{
+              duration: 0.4,
+              ease: [0.25, 0.1, 0.25, 1],
+            }}
+          >
+            {renderPage()}
+          </motion.div>
+        </AnimatePresence>
       </main>
 
       <Footer data={data} setCurrentPage={setCurrentPage} />

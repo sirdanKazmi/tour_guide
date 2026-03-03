@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Play, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Play, X, Film, Clock, Eye } from 'lucide-react';
+import { FadeIn, Card3D, GlowCard } from '@/components/animations';
 
 interface VideoGalleryProps {
     setCurrentPage: (page: string) => void;
@@ -45,119 +47,233 @@ const VideoGallery: React.FC<VideoGalleryProps> = ({ setCurrentPage }) => {
     return (
         <div className="min-h-screen pt-24 pb-20 px-4">
             <div className="max-w-7xl mx-auto">
-                <div className="text-center mb-12 animate-fadeIn">
-                    <h1 className="text-5xl font-bold mb-4 text-slate-900 dark:text-white">
-                        Video Gallery
+                {/* Header */}
+                <FadeIn className="text-center mb-8 sm:mb-12 px-4">
+                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4 text-slate-900 dark:text-white">
+                        Video <span className="gradient-text">Gallery</span>
                     </h1>
-                    <p className="text-xl text-slate-600 dark:text-slate-300">
+                    <p className="text-base sm:text-lg lg:text-xl text-slate-600 dark:text-slate-300">
                         Watch our amazing tour adventures
                     </p>
-                </div>
+                </FadeIn>
 
                 {/* Category Filter */}
-                <div className="flex flex-wrap justify-center gap-4 mb-12 animate-fadeIn" style={{ animationDelay: '0.2s' }}>
+                <FadeIn delay={0.2} className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-8 sm:mb-12 px-4">
                     {categories.map((cat) => (
-                        <button
+                        <motion.button
                             key={cat}
                             onClick={() => setFilter(cat)}
-                            className={`px-6 py-3 rounded-full font-semibold transition-all ${filter === cat
-                                    ? 'bg-emerald-600 text-white'
-                                    : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
-                                }`}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className={`relative px-4 sm:px-6 py-2 sm:py-3 rounded-full font-semibold text-sm sm:text-base transition-all ${
+                                filter === cat
+                                    ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/30'
+                                    : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'
+                            }`}
                         >
                             {cat}
-                        </button>
+                            {filter === cat && (
+                                <motion.div
+                                    layoutId="videoFilter"
+                                    className="absolute inset-0 bg-emerald-600 rounded-full -z-10"
+                                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                                />
+                            )}
+                        </motion.button>
                     ))}
-                </div>
+                </FadeIn>
 
                 {/* Video Grid */}
-                {loading ? (
-                    <div className="text-center py-12">
-                        <p className="text-slate-600 dark:text-slate-400">Loading videos...</p>
-                    </div>
-                ) : filteredVideos.length === 0 ? (
-                    <div className="text-center py-12">
-                        <p className="text-slate-600 dark:text-slate-400">No videos available</p>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {filteredVideos.map((video, idx) => (
-                            <div
-                                key={video.id}
-                                onClick={() => setSelectedVideo(video)}
-                                className="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden cursor-pointer group animate-fadeIn hover:shadow-2xl transition-shadow"
-                                style={{ animationDelay: `${idx * 0.05}s` }}
+                <AnimatePresence mode="wait">
+                    {loading ? (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="flex flex-col items-center justify-center py-20"
+                        >
+                            <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                             >
-                                <div className="relative aspect-video bg-slate-200 dark:bg-slate-700">
-                                    {video.thumbnail_url ? (
-                                        <img
-                                            src={video.thumbnail_url}
-                                            alt={video.title}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    ) : (
-                                        <div className="flex items-center justify-center h-full">
-                                            <Play className="text-slate-400" size={64} />
-                                        </div>
-                                    )}
-                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center">
-                                        <div className="bg-emerald-600 rounded-full p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Play className="text-white" size={32} />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="p-4">
-                                    <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-2">
-                                        {video.title}
-                                    </h3>
-                                    <p className="text-sm text-emerald-600 dark:text-emerald-400 mb-2">
-                                        {video.category}
-                                    </p>
-                                    {video.description && (
-                                        <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
-                                            {video.description}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
+                                <Film className="text-emerald-600" size={48} />
+                            </motion.div>
+                            <p className="mt-4 text-slate-600 dark:text-slate-400">Loading videos...</p>
+                        </motion.div>
+                    ) : filteredVideos.length === 0 ? (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="text-center py-20"
+                        >
+                            <Film className="mx-auto mb-4 text-slate-400" size={48} />
+                            <p className="text-slate-600 dark:text-slate-400">No videos available</p>
+                        </motion.div>
+                    ) : (
+                        <motion.div
+                            key={filter}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-4"
+                        >
+                            {filteredVideos.map((video, idx) => (
+                                <motion.div
+                                    key={video.id}
+                                    layout
+                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.9 }}
+                                    transition={{ delay: idx * 0.05 }}
+                                >
+                                    <Card3D className="h-full" intensity={8}>
+                                        <GlowCard
+                                            className="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden cursor-pointer h-full"
+                                            glowColor="rgba(16, 185, 129, 0.1)"
+                                        >
+                                            <motion.div
+                                                onClick={() => setSelectedVideo(video)}
+                                                className="relative aspect-video bg-slate-200 dark:bg-slate-700 overflow-hidden"
+                                                whileHover={{ scale: 1.02 }}
+                                            >
+                                                {video.thumbnail_url ? (
+                                                    <motion.img
+                                                        src={video.thumbnail_url}
+                                                        alt={video.title}
+                                                        className="w-full h-full object-cover"
+                                                        whileHover={{ scale: 1.1 }}
+                                                        transition={{ duration: 0.6 }}
+                                                    />
+                                                ) : (
+                                                    <div className="flex items-center justify-center h-full">
+                                                        <Play className="text-slate-400" size={64} />
+                                                    </div>
+                                                )}
+                                                
+                                                {/* Overlay */}
+                                                <motion.div
+                                                    className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center"
+                                                    whileHover={{ backgroundColor: 'rgba(0,0,0,0.4)' }}
+                                                >
+                                                    <motion.div
+                                                        className="bg-emerald-600 rounded-full p-4"
+                                                        initial={{ opacity: 0, scale: 0 }}
+                                                        whileHover={{ opacity: 1, scale: 1 }}
+                                                        transition={{ duration: 0.2 }}
+                                                    >
+                                                        <Play className="text-white" size={32} />
+                                                    </motion.div>
+                                                </motion.div>
+                                                
+                                                {/* Duration Badge */}
+                                                {video.duration && (
+                                                    <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
+                                                        <Clock size={12} />
+                                                        {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')}
+                                                    </div>
+                                                )}
+                                            </motion.div>
+                                            
+                                            <div className="p-4">
+                                                <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-2 line-clamp-1">
+                                                    {video.title}
+                                                </h3>
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">
+                                                        {video.category}
+                                                    </span>
+                                                    <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                                                        <Eye size={14} /> Watch Now
+                                                    </span>
+                                                </div>
+                                                {video.description && (
+                                                    <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 mt-2">
+                                                        {video.description}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </GlowCard>
+                                    </Card3D>
+                                </motion.div>
+                            ))}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 {/* Video Player Modal */}
-                {selectedVideo && (
-                    <div
-                        className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
-                        onClick={() => setSelectedVideo(null)}
-                    >
-                        <div className="max-w-5xl w-full" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex justify-between items-start mb-4">
-                                <div>
-                                    <h2 className="text-2xl font-bold text-white mb-2">
-                                        {selectedVideo.title}
-                                    </h2>
-                                    {selectedVideo.description && (
-                                        <p className="text-slate-300">{selectedVideo.description}</p>
-                                    )}
-                                </div>
-                                <button
-                                    onClick={() => setSelectedVideo(null)}
-                                    className="text-white hover:text-slate-300 p-2"
-                                >
-                                    <X size={32} />
-                                </button>
-                            </div>
-                            <video
-                                src={selectedVideo.video_url}
-                                controls
-                                autoPlay
-                                className="w-full rounded-lg shadow-2xl"
+                <AnimatePresence>
+                    {selectedVideo && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4"
+                            onClick={() => setSelectedVideo(null)}
+                        >
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.8, y: 50 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.8, y: 50 }}
+                                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                                className="max-w-5xl w-full"
+                                onClick={(e) => e.stopPropagation()}
                             >
-                                Your browser does not support the video tag.
-                            </video>
-                        </div>
-                    </div>
-                )}
+                                {/* Header */}
+                                <div className="flex justify-between items-start mb-4">
+                                    <div>
+                                        <motion.h2
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: 0.1 }}
+                                            className="text-2xl font-bold text-white mb-2"
+                                        >
+                                            {selectedVideo.title}
+                                        </motion.h2>
+                                        {selectedVideo.description && (
+                                            <motion.p
+                                                initial={{ opacity: 0, x: -20 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                transition={{ delay: 0.2 }}
+                                                className="text-slate-300"
+                                            >
+                                                {selectedVideo.description}
+                                            </motion.p>
+                                        )}
+                                    </div>
+                                    <motion.button
+                                        initial={{ opacity: 0, scale: 0 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0 }}
+                                        whileHover={{ scale: 1.1, rotate: 90 }}
+                                        onClick={() => setSelectedVideo(null)}
+                                        className="text-white hover:text-slate-300 p-2 bg-white/10 backdrop-blur-sm rounded-full"
+                                    >
+                                        <X size={32} />
+                                    </motion.button>
+                                </div>
+                                
+                                {/* Video Player */}
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: 0.1 }}
+                                    className="relative rounded-xl overflow-hidden shadow-2xl"
+                                >
+                                    <video
+                                        src={selectedVideo.video_url}
+                                        controls
+                                        autoPlay
+                                        className="w-full"
+                                    >
+                                        Your browser does not support the video tag.
+                                    </video>
+                                </motion.div>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
         </div>
     );

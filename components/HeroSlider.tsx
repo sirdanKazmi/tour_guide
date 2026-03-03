@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Hero Background Slider Component
 const HeroSlider: React.FC = () => {
@@ -14,28 +15,72 @@ const HeroSlider: React.FC = () => {
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 5000);
+    }, 6000);
     return () => clearInterval(timer);
   }, []);
 
   return (
     <div className="absolute inset-0 overflow-hidden">
-      {slides.map((slide, idx) => (
-        <div
-          key={idx}
-          className={`absolute inset-0 transition-opacity duration-1000 ${
-            idx === currentSlide ? 'opacity-100' : 'opacity-0'
-          }`}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentSlide}
+          initial={{ opacity: 0, scale: 1.1 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 1.5, ease: 'easeInOut' }}
+          className="absolute inset-0"
           style={{
-            backgroundImage: `url(${slide})`,
+            backgroundImage: `url(${slides[currentSlide]})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center'
           }}
         >
-          <div className="absolute inset-0 bg-linear-to-b from-black/60 via-black/40 to-black/70" />
-        </div>
-      ))}
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
+          
+          {/* Animated Particles Effect */}
+          <div className="absolute inset-0 overflow-hidden">
+            {[...Array(20)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute w-1 h-1 bg-white/30 rounded-full"
+                initial={{
+                  x: Math.random() * 100 + '%',
+                  y: '100%',
+                  opacity: 0,
+                }}
+                animate={{
+                  y: '-10%',
+                  opacity: [0, 1, 0],
+                }}
+                transition={{
+                  duration: Math.random() * 5 + 5,
+                  repeat: Infinity,
+                  delay: Math.random() * 5,
+                  ease: 'linear',
+                }}
+              />
+            ))}
+          </div>
+        </motion.div>
+      </AnimatePresence>
+
+      {/* Slide Indicators */}
+      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-2 z-20">
+        {slides.map((_, idx) => (
+          <motion.button
+            key={idx}
+            onClick={() => setCurrentSlide(idx)}
+            className={`h-1 rounded-full transition-all duration-300 ${
+              idx === currentSlide ? 'w-8 bg-emerald-500' : 'w-2 bg-white/50'
+            }`}
+            whileHover={{ scale: 1.2 }}
+            whileTap={{ scale: 0.9 }}
+          />
+        ))}
+      </div>
     </div>
   );
 };
+
 export default HeroSlider;

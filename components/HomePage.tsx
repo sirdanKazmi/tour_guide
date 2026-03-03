@@ -1,202 +1,277 @@
 'use client';
 
 import React from 'react';
-import { ChevronRight, Star, Award, Mountain, Users, Compass, Camera } from 'lucide-react';
-import HeroSlider from '@/components/HeroSlider';
+import { motion } from 'framer-motion';
+import { ChevronRight, ArrowRight, Sparkles, Shield, Clock, Headphones } from 'lucide-react';
+import Link from 'next/link';
 import { TourData } from '@/lib/data';
+import HeroSection from '@/components/HeroSection';
+import DestinationCard from '@/components/DestinationCard';
+import StatsSection from '@/components/StatsSection';
+import TestimonialCard from '@/components/TestimonialCard';
+import { ScrollReveal, MagneticButton } from '@/components/animations';
 
 interface HomePageProps {
   data: TourData;
   setCurrentPage: (page: string) => void;
 }
 
+const features = [
+  {
+    icon: Shield,
+    title: 'Secure Booking',
+    description: 'Your payments and personal data are always protected',
+  },
+  {
+    icon: Clock,
+    title: '24/7 Support',
+    description: 'Our travel experts are available around the clock',
+  },
+  {
+    icon: Headphones,
+    title: 'Expert Guides',
+    description: 'Professional local guides with years of experience',
+  },
+  {
+    icon: Sparkles,
+    title: 'Best Price Guarantee',
+    description: 'Find a lower price? We will match it',
+  },
+];
+
 const HomePage: React.FC<HomePageProps> = ({ data, setCurrentPage }) => {
-  const iconMap: Record<string, React.ReactNode> = {
-    Mountain: <Mountain className="text-emerald-600" size={32} />,
-    Users: <Users className="text-emerald-600" size={32} />,
-    Compass: <Compass className="text-emerald-600" size={32} />,
-    Camera: <Camera className="text-emerald-600" size={32} />
-  };
-
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-white dark:bg-slate-900">
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center text-white">
-        <HeroSlider />
-        <div className="relative z-10 text-center px-4 max-w-4xl mx-auto animate-fadeIn">
-          <img
-            src={data.guide.profilePhoto}
-            alt={data.guide.name}
-            className="w-32 h-32 rounded-full mx-auto mb-6 border-4 border-white shadow-2xl object-cover"
-          />
-          <h1 className="text-5xl md:text-7xl font-bold mb-4 animate-slideUp">
-            Your Local Adventure Expert
-          </h1>
-          <p className="text-xl md:text-2xl mb-8 text-slate-200 animate-slideUp" style={{ animationDelay: '0.2s' }}>
-            Discover breathtaking destinations with an experienced guide
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slideUp" style={{ animationDelay: '0.4s' }}>
-            <button
-              onClick={() => setCurrentPage('Contact')}
-              className="px-8 py-4 bg-emerald-600 hover:bg-emerald-700 rounded-full font-semibold text-lg transition-all transform hover:scale-105 hover:shadow-2xl"
-            >
-              Book Now
-            </button>
-            <button
-              onClick={() => setCurrentPage('Destinations')}
-              className="px-8 py-4 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full font-semibold text-lg transition-all transform hover:scale-105"
-            >
-              View Itineraries
-            </button>
-          </div>
-        </div>
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-          <ChevronRight className="rotate-90 text-white" size={32} />
-        </div>
-      </section>
+      <HeroSection setCurrentPage={setCurrentPage} />
 
-      {/* About Preview */}
-      <section className="py-20 px-4 bg-linear-to-b from-white to-slate-50 dark:from-slate-900 dark:to-slate-800">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="animate-fadeIn">
-              <h2 className="text-4xl font-bold mb-6 text-slate-900 dark:text-white">
-                Meet Your Guide
-              </h2>
-              <p className="text-lg text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
-                {data.guide.bio}
-              </p>
-              <button
-                onClick={() => setCurrentPage('About')}
-                className="inline-flex items-center px-6 py-3 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 transition-all transform hover:scale-105"
-              >
-                Learn More <ChevronRight className="ml-2" size={20} />
-              </button>
-            </div>
-            <div className="relative animate-fadeIn" style={{ animationDelay: '0.2s' }}>
-              <img
-                src={data.guide.profilePhoto}
-                alt={data.guide.name}
-                className="rounded-2xl shadow-2xl w-full h-96 object-cover"
-              />
-              <div className="absolute -bottom-6 -right-6 bg-amber-500 text-white p-6 rounded-xl shadow-xl">
-                <Award size={32} />
-                <p className="font-bold mt-2">10+ Years</p>
-                <p className="text-sm">Experience</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Destinations */}
-      <section className="py-20 px-4 bg-slate-50 dark:bg-slate-800">
+      {/* Featured Destinations Section */}
+      <section className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-center mb-12 text-slate-900 dark:text-white">
-            Featured Destinations
-          </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {data.destinations.map((dest, idx) => (
-              <div
-                key={dest.id}
-                className="group cursor-pointer animate-fadeIn"
-                style={{ animationDelay: `${idx * 0.1}s` }}
+          {/* Section Header */}
+          <ScrollReveal className="text-center mb-12 sm:mb-16">
+            <span className="inline-block px-4 py-1.5 bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 rounded-full text-sm font-semibold mb-4">
+              Popular Destinations
+            </span>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white mb-4">
+              Discover Your Next{' '}
+              <span className="bg-gradient-to-r from-sky-500 to-blue-600 bg-clip-text text-transparent">
+                Adventure
+              </span>
+            </h2>
+            <p className="text-slate-600 dark:text-slate-400 text-lg max-w-2xl mx-auto">
+              From breathtaking mountains to pristine beaches, explore our handpicked destinations
+            </p>
+          </ScrollReveal>
+
+          {/* Destinations Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+            {data.destinations.map((destination, index) => (
+              <DestinationCard
+                key={destination.id}
+                destination={destination}
+                index={index}
                 onClick={() => setCurrentPage('Destinations')}
-              >
-                <div className="relative overflow-hidden rounded-2xl shadow-lg transition-transform duration-300 group-hover:scale-105">
-                  <img
-                    src={dest.image}
-                    alt={dest.name}
-                    className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <h3 className="text-xl font-bold mb-2">{dest.name}</h3>
-                    <p className="text-sm text-slate-200">{dest.region}</p>
-                  </div>
-                </div>
-              </div>
+              />
             ))}
           </div>
+
+          {/* View All Button */}
+          <ScrollReveal className="text-center mt-12" delay={0.3}>
+            <Link href="/destinations/gilgit-baltistan">
+              <motion.button
+                whileHover={{ scale: 1.05, x: 5 }}
+                whileTap={{ scale: 0.95 }}
+                className="inline-flex items-center gap-2 px-8 py-4 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white rounded-full font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+              >
+                Explore Gilgit-Baltistan
+                <ArrowRight className="w-5 h-5" />
+              </motion.button>
+            </Link>
+          </ScrollReveal>
         </div>
       </section>
 
-      {/* Services */}
-      <section className="py-20 px-4 bg-white dark:bg-slate-900">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl font-bold text-center mb-12 text-slate-900 dark:text-white">
-            Our Services
-          </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {data.services.map((service, idx) => (
-              <div
-                key={idx}
-                className="text-center p-6 rounded-xl bg-linear-to-br from-slate-50 to-white dark:from-slate-800 dark:to-slate-700 shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-2 animate-fadeIn"
-                style={{ animationDelay: `${idx * 0.1}s` }}
-              >
-                <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                  {iconMap[service.icon]}
-                </div>
-                <h3 className="text-xl font-bold mb-2 text-slate-900 dark:text-white">
-                  {service.title}
-                </h3>
-                <p className="text-slate-600 dark:text-slate-300">
-                  {service.description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Stats Section */}
+      <StatsSection />
 
-      {/* Testimonials */}
-      <section className="py-20 px-4 bg-linear-to-br from-emerald-50 to-amber-50 dark:from-slate-800 dark:to-slate-900">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl font-bold text-center mb-12 text-slate-900 dark:text-white">
-            What Travelers Say
-          </h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            {data.testimonials.map((testimonial, idx) => (
-              <div
-                key={idx}
-                className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-xl animate-fadeIn"
-                style={{ animationDelay: `${idx * 0.1}s` }}
-              >
-                <div className="flex items-center mb-4">
+      {/* Why Choose Us Section */}
+      <section className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 bg-slate-50 dark:bg-slate-800/50">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+            {/* Left Content */}
+            <ScrollReveal direction="left">
+              <span className="inline-block px-4 py-1.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-full text-sm font-semibold mb-4">
+                Why Choose Us
+              </span>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white mb-6">
+                We Make Your Travel{' '}
+                <span className="bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
+                  Dreams Real
+                </span>
+              </h2>
+              <p className="text-slate-600 dark:text-slate-400 text-lg mb-8">
+                With over 15 years of experience, we have helped thousands of travelers 
+                discover the world is most incredible destinations. Our commitment to 
+                excellence ensures every journey is unforgettable.
+              </p>
+              
+              <div className="space-y-4">
+                {features.map((feature, index) => (
+                  <motion.div
+                    key={feature.title}
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.1 }}
+                    className="flex items-start gap-4 p-4 rounded-2xl bg-white dark:bg-slate-800 shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    <div className="w-12 h-12 bg-gradient-to-br from-sky-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <feature.icon className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-slate-900 dark:text-white mb-1">
+                        {feature.title}
+                      </h3>
+                      <p className="text-slate-600 dark:text-slate-400 text-sm">
+                        {feature.description}
+                      </p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </ScrollReveal>
+
+            {/* Right Image */}
+            <ScrollReveal direction="right" delay={0.2}>
+              <div className="relative">
+                <div className="relative rounded-3xl overflow-hidden shadow-2xl">
                   <img
-                    src={testimonial.image}
-                    alt={testimonial.name}
-                    className="w-16 h-16 rounded-full mr-4 object-cover"
+                    src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80"
+                    alt="Travel Experience"
+                    className="w-full h-[500px] object-cover"
                   />
-                  <div>
-                    <h4 className="font-bold text-slate-900 dark:text-white">{testimonial.name}</h4>
-                    <div className="flex text-amber-500">
-                      {[...Array(testimonial.rating)].map((_, i) => (
-                        <Star key={i} size={16} fill="currentColor" />
-                      ))}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent" />
+                </div>
+                
+                {/* Floating Card */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.5 }}
+                  className="absolute -bottom-6 -left-6 bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-xl"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center">
+                      <span className="text-2xl font-bold text-white">98%</span>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-900 dark:text-white">Customer</p>
+                      <p className="text-slate-600 dark:text-slate-400">Satisfaction Rate</p>
                     </div>
                   </div>
-                </div>
-                <p className="text-slate-600 dark:text-slate-300 italic">
-                  "{testimonial.text}"
-                </p>
+                </motion.div>
+
+                {/* Decorative Elements */}
+                <div className="absolute -top-4 -right-4 w-24 h-24 bg-gradient-to-br from-sky-400 to-blue-500 rounded-full opacity-20 blur-2xl" />
+                <div className="absolute -bottom-4 right-1/4 w-32 h-32 bg-gradient-to-br from-orange-400 to-red-500 rounded-full opacity-20 blur-2xl" />
               </div>
+            </ScrollReveal>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Section Header */}
+          <ScrollReveal className="text-center mb-12 sm:mb-16">
+            <span className="inline-block px-4 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-full text-sm font-semibold mb-4">
+              Testimonials
+            </span>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white mb-4">
+              What Our Travelers{' '}
+              <span className="bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
+                Say
+              </span>
+            </h2>
+            <p className="text-slate-600 dark:text-slate-400 text-lg max-w-2xl mx-auto">
+              Real stories from real travelers who have experienced unforgettable journeys with us
+            </p>
+          </ScrollReveal>
+
+          {/* Featured Testimonial */}
+          <div className="mb-8 sm:mb-12">
+            <TestimonialCard 
+              testimonial={data.testimonials[0]} 
+              featured 
+            />
+          </div>
+
+          {/* Testimonials Grid */}
+          <div className="grid md:grid-cols-2 gap-6 sm:gap-8">
+            {data.testimonials.slice(1).map((testimonial, index) => (
+              <TestimonialCard
+                key={testimonial.name}
+                testimonial={testimonial}
+                index={index}
+              />
             ))}
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 bg-emerald-600 text-white">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-6">Ready for Your Next Adventure?</h2>
-          <p className="text-xl mb-8">Let's plan an unforgettable journey together</p>
-          <button
-            onClick={() => setCurrentPage('Contact')}
-            className="px-8 py-4 bg-white text-emerald-600 rounded-full font-semibold text-lg hover:bg-slate-100 transition-all transform hover:scale-105 hover:shadow-2xl"
-          >
-            Get In Touch
-          </button>
+      <section className="relative py-20 sm:py-28 px-4 sm:px-6 lg:px-8 overflow-hidden">
+        {/* Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-sky-600 via-blue-700 to-indigo-800" />
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
+        
+        {/* Animated Blobs */}
+        <motion.div
+          className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/5 rounded-full blur-3xl"
+          animate={{
+            x: [0, -50, 0],
+            y: [0, 30, 0],
+          }}
+          transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <motion.div
+          className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-orange-500/10 rounded-full blur-3xl"
+          animate={{
+            x: [0, 40, 0],
+            y: [0, -40, 0],
+          }}
+          transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
+        />
+
+        <div className="relative z-10 max-w-4xl mx-auto text-center">
+          <ScrollReveal>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6">
+              Ready to Start Your Adventure?
+            </h2>
+            <p className="text-white/80 text-lg sm:text-xl mb-8 max-w-2xl mx-auto">
+              Join thousands of happy travelers and create memories that will last a lifetime. 
+              Your next great adventure is just a click away.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <MagneticButton
+                onClick={() => setCurrentPage('Contact')}
+                className="px-8 py-4 bg-white text-sky-600 rounded-full font-semibold text-lg shadow-xl hover:shadow-2xl transition-all"
+              >
+                Book Your Trip Now
+              </MagneticButton>
+              <motion.button
+                onClick={() => setCurrentPage('Destinations')}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-8 py-4 bg-white/10 backdrop-blur-md text-white rounded-full font-semibold text-lg border border-white/30 hover:bg-white/20 transition-all"
+              >
+                Explore Destinations
+              </motion.button>
+            </div>
+          </ScrollReveal>
         </div>
       </section>
     </div>

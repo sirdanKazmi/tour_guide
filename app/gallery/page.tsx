@@ -1,8 +1,5 @@
-'use client';
+import { redirect } from 'next/navigation';
 
-import GalleryPageComponent from '@/components/GalleryPage';
-import { initialData } from '@/lib/data';
-
-export default function GalleryPage() {
-  return <GalleryPageComponent data={initialData} />;
-};
+export default function GalleryRoute() {
+  redirect('/');
+}
