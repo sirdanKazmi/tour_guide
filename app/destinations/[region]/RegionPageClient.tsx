@@ -119,11 +119,9 @@ export default function RegionPageClient({ region }: RegionPageClientProps) {
                 Why Visit
               </span>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white mb-6">
-                What Makes{' '}
                 <span className="bg-gradient-to-r from-sky-500 to-blue-600 bg-clip-text text-transparent">
-                  {region.name}
-                </span>{' '}
-                Special
+                  What Makes {region.name} Special
+                </span>
               </h2>
               <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed mb-8">
                 {region.whyVisit}
@@ -160,9 +158,8 @@ export default function RegionPageClient({ region }: RegionPageClientProps) {
               Must-See Places
             </span>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white mb-4">
-              Top Attractions in{' '}
               <span className="bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
-                {region.name}
+                Top Attractions in {region.name}
               </span>
             </h2>
             <p className="text-slate-600 dark:text-slate-400 text-lg max-w-2xl mx-auto">
@@ -192,9 +189,8 @@ export default function RegionPageClient({ region }: RegionPageClientProps) {
               Adventures Await
             </span>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white mb-4">
-              Popular{' '}
               <span className="bg-gradient-to-r from-emerald-500 to-teal-500 bg-clip-text text-transparent">
-                Activities
+                Popular Activities
               </span>
             </h2>
             <p className="text-slate-600 dark:text-slate-400 text-lg max-w-2xl mx-auto">
@@ -222,9 +218,8 @@ export default function RegionPageClient({ region }: RegionPageClientProps) {
               Plan Your Budget
             </span>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white mb-4">
-              Estimated Daily{' '}
               <span className="bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
-                Budget
+                Estimated Daily Budget
               </span>
             </h2>
             <p className="text-slate-600 dark:text-slate-400 text-lg max-w-2xl mx-auto">

@@ -2,12 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Navigation from '@/components/Navigation';
 import AboutPageComponent from '@/components/AboutPage';
 import DestinationsPageComponent from '@/components/DestinationsPage';
 import GalleryPageComponent from '@/components/GalleryPage';
 import ContactPageComponent from '@/components/ContactPage';
-import Footer from '@/components/Footer';
 import { initialData } from '@/lib/data';
 import HomePage from '@/components/HomePage';
 import VideoGallery from '@/components/VideoGallery';
@@ -90,12 +88,7 @@ export default function TouristGuideWebsite() {
         }
       `}</style>
 
-      <Navigation
-        darkMode={darkMode}
-        setDarkMode={setDarkMode}
-        currentPage={currentPage}
-        setCurrentPage={setCurrentPage}
-      />
+      {/* Navigation is now in root layout */}
 
       <main className="bg-white dark:bg-slate-900 transition-colors duration-300">
         <AnimatePresence mode="wait">
@@ -115,7 +108,7 @@ export default function TouristGuideWebsite() {
         </AnimatePresence>
       </main>
 
-      <Footer data={data} setCurrentPage={setCurrentPage} />
+      {/* Footer is now in root layout */}
     </div>
   );
 }

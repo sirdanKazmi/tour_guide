@@ -49,6 +49,7 @@
   --foreground: #F8FAFC;
 }
 
+/* Tailwind v4 theme configuration - @theme is a valid Tailwind directive */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
