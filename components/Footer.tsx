@@ -34,7 +34,7 @@ const Footer: React.FC = () => {
 
   const contactInfo = {
     phone: '+92 123 456 7890',
-    email: 'info@wanderlust.travel',
+    email: 'SmileforMiles@gmail.com',
     address: 'Main Bazaar, Skardu, Gilgit-Baltistan, Pakistan'
   };
 

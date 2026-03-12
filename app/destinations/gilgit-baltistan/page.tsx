@@ -146,14 +146,14 @@ export default function GilgitBaltistanPage() {
                   <div className="space-y-4">
                     <div className="rounded-2xl overflow-hidden h-48">
                       <img
-                        src="https://images.unsplash.com/photo-1589308078059-be1415eab4c3?w=400&q=80"
+                        src="/destinations/Skardu/image10.png"
                         alt="Mountain Lake"
                         className="w-full h-full object-cover"
                       />
                     </div>
                     <div className="rounded-2xl overflow-hidden h-64">
                       <img
-                        src="https://images.unsplash.com/photo-1519904981063-b0cf448d479e?w=400&q=80"
+                        src="/destinations/Skardu/image11.png"
                         alt="Valley View"
                         className="w-full h-full object-cover"
                       />
@@ -162,14 +162,14 @@ export default function GilgitBaltistanPage() {
                   <div className="space-y-4 pt-8">
                     <div className="rounded-2xl overflow-hidden h-64">
                       <img
-                        src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400&q=80"
+                        src="/destinations/Skardu/image12.png"
                         alt="Mountain Peak"
                         className="w-full h-full object-cover"
                       />
                     </div>
                     <div className="rounded-2xl overflow-hidden h-48">
                       <img
-                        src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=400&q=80"
+                        src="/destinations/Skardu/image4.png"
                         alt="Alpine Lake"
                         className="w-full h-full object-cover"
                       />

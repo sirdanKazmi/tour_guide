@@ -147,7 +147,7 @@ const HomePage: React.FC<HomePageProps> = ({ data, setCurrentPage }) => {
               <div className="relative">
                 <div className="relative rounded-3xl overflow-hidden shadow-2xl">
                   <img
-                    src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80"
+                    src="image/image3.png"
                     alt="Travel Experience"
                     className="w-full h-[500px] object-cover"
                   />

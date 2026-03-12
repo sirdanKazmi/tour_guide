@@ -144,22 +144,42 @@ export const initialData: TourData = {
     {
       id: 1,
       category: "Mountains",
-      image: "/image/image1.jpeg"
+      image: [
+        "/GalleryImg/image1.jpeg",
+        "/GalleryImg/image2.jpeg",
+        "/GalleryImg/image3.jpeg",
+        "/GalleryImg/image4.jpeg",
+      ]
     },
     {
       id: 2,
       category: "Coast",
-      image: "/image/image2.jpg"
+      image: [
+        "/GalleryImg/image5.jpeg",
+        "/GalleryImg/image6.jpeg",
+        "/GalleryImg/image7.jpeg",
+        "/GalleryImg/image8.jpeg",
+      ]
     },
     {
       id: 3,
       category: "Forest",
-      image: "/image/image3.png"
+      image: [
+        "/GalleryImg/image9.jpeg",
+        "/GalleryImg/image10.jpeg",
+        "/GalleryImg/image11.jpeg",
+        "/GalleryImg/image12.jpeg",
+      ]
     },
     {
-      id: 6,
+      id: 4,
       category: "Desert",
-      image: "/image/image4.webp"
+      image: [
+
+        "/GalleryImg/image13.jpeg",
+        "/GalleryImg/image14.jpeg",
+        "/GalleryImg/image15.jpeg"
+      ]
 
     }
   ]
