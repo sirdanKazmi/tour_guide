@@ -26,7 +26,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ setCurrentPage }) => {
       {/* Background Image with Overlay */}
       <div className="absolute inset-0">
         <motion.img
-          src="https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=1920&q=80"
+          src="/bg.png"
           alt="Travel Background"
           className="w-full h-full object-cover"
           initial={{ scale: 1.1 }}
@@ -70,7 +70,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ setCurrentPage }) => {
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 mb-6"
           >
             <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-white/90 text-sm font-medium">Explore 1000+ Destinations</span>
+            <span className="text-white/90 text-sm font-medium">Explore 100+ Destinations</span>
           </motion.div>
 
           {/* Headline */}
@@ -80,7 +80,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ setCurrentPage }) => {
             transition={{ duration: 0.8, delay: 0.1 }}
             className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight"
           >
-            Explore the World
+            Explore Gilgit Baltistan
             <br />
             <span className="bg-gradient-to-r from-sky-400 via-blue-400 to-orange-400 bg-clip-text text-transparent">
               Differently

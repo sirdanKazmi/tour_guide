@@ -98,7 +98,7 @@ const Footer: React.FC = () => {
                     <Plane className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <span className="text-xl font-bold">Wanderlust</span>
+                    <span className="text-xl font-bold">Smile For Miles</span>
                     <span className="block text-xs text-sky-400 tracking-widest uppercase">Travel</span>
                   </div>
                 </motion.div>
@@ -215,7 +215,7 @@ const Footer: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <p className="text-slate-500 text-sm text-center sm:text-left">
-              &copy; {new Date().getFullYear()} Wanderlust Travel. All rights reserved.
+              &copy; {new Date().getFullYear()} Smile For Miles Travel. All rights reserved.
             </p>
             
             <div className="flex items-center gap-6">

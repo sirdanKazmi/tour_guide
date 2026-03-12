@@ -1,5 +1,7 @@
-import { redirect } from 'next/navigation';
+'use client';
+
+import VideoGallery from '@/components/VideoGallery';
 
 export default function VideosRoute() {
-  redirect('/');
+  return <VideoGallery setCurrentPage={() => {}} />;
 }

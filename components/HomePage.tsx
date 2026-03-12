@@ -182,10 +182,9 @@ const HomePage: React.FC<HomePageProps> = ({ data, setCurrentPage }) => {
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8">
+      {/* Testimonials Section - Temporarily disabled due to empty testimonials data */}
+      {/* <section className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          {/* Section Header */}
           <ScrollReveal className="text-center mb-12 sm:mb-16">
             <span className="inline-block px-4 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-full text-sm font-semibold mb-4">
               Testimonials
@@ -201,7 +200,6 @@ const HomePage: React.FC<HomePageProps> = ({ data, setCurrentPage }) => {
             </p>
           </ScrollReveal>
 
-          {/* Featured Testimonial */}
           <div className="mb-8 sm:mb-12">
             <TestimonialCard 
               testimonial={data.testimonials[0]} 
@@ -209,7 +207,6 @@ const HomePage: React.FC<HomePageProps> = ({ data, setCurrentPage }) => {
             />
           </div>
 
-          {/* Testimonials Grid */}
           <div className="grid md:grid-cols-2 gap-6 sm:gap-8">
             {data.testimonials.slice(1).map((testimonial, index) => (
               <TestimonialCard
@@ -220,7 +217,7 @@ const HomePage: React.FC<HomePageProps> = ({ data, setCurrentPage }) => {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* CTA Section */}
       <section className="relative py-20 sm:py-28 px-4 sm:px-6 lg:px-8 overflow-hidden">

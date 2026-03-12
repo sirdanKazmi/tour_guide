@@ -101,7 +101,7 @@ const Navigation: React.FC = () => {
               <span className={`text-lg sm:text-xl font-bold tracking-tight ${
                 scrolled ? 'text-slate-900 dark:text-white' : 'text-white'
               }`}>
-                Wanderlust
+                Smile For Miles
               </span>
               <span className={`text-[10px] sm:text-xs tracking-widest uppercase ${
                 scrolled ? 'text-sky-600 dark:text-sky-400' : 'text-white/80'

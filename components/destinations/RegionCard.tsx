@@ -60,19 +60,11 @@ const RegionCard: React.FC<RegionCardProps> = ({ region, index = 0 }) => {
             </p>
 
             {/* Footer */}
-            <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700">
+            <div className="flex items-center pt-4 border-t border-slate-100 dark:border-slate-700">
               <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400 text-sm">
                 <MapPin className="w-4 h-4" />
                 <span>{region.attractions.length} Attractions</span>
               </div>
-              
-              <motion.div
-                whileHover={{ x: 4 }}
-                className="flex items-center gap-1 text-sky-600 dark:text-sky-400 font-semibold text-sm"
-              >
-                Explore
-                <ArrowRight className="w-4 h-4" />
-              </motion.div>
             </div>
           </div>
         </div>

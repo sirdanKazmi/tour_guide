@@ -1,5 +1,6 @@
-import { redirect } from 'next/navigation';
+import ContactPageComponent from '@/components/ContactPage';
+import { initialData } from '@/lib/data';
 
 export default function ContactRoute() {
-  redirect('/');
+  return <ContactPageComponent data={initialData} />;
 }

@@ -51,17 +51,17 @@ export interface TourData {
 
 export const initialData: TourData = {
   guide: {
-    name: "Sarah Anderson",
+    name: "Syed Hidayat Hashmi",
     title: "Professional Adventure Guide",
     bio: "With over 10 years of experience exploring the world's most breathtaking destinations, I'm passionate about creating unforgettable journeys. From mountain peaks to hidden coastal gems, I've guided hundreds of travelers to discover the beauty and culture of extraordinary places.",
-    profilePhoto: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop",
-    phone: "+1-555-0123",
-    whatsapp: "15550123",
-    email: "sarah@adventureguide.com",
-    address: "123 Explorer Street, Adventure City, AC 12345",
+    profilePhoto: "/about/about.png",
+    phone: "03249429323",
+    whatsapp: "03249429323",
+    email: "shyedhidayat.hashmi@gmail.com",
+    address: " Main Bazaar, Skardu, Gilgit-Baltistan, Pakistan ",
     socials: {
-      instagram: "https://instagram.com/adventureguide",
-      facebook: "https://facebook.com/adventureguide"
+      instagram: "https://www.instagram.com/smilesmiles1234/?hl=en",
+      facebook: "https://www.facebook.com/syedhidayat.hashmi"
     }
   },
   destinations: [
@@ -69,32 +69,32 @@ export const initialData: TourData = {
       id: 1,
       name: "Mountain Paradise",
       region: "Mountains",
-      description: "Experience breathtaking alpine scenery with pristine hiking trails and stunning vistas.",
-      image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop",
+      description: "Explore the majestic mountains of Gilgit-Baltistan, home to some of the world’s highest peaks including K2. Visitors can enjoy trekking, climbing, and breathtaking views of glaciers, valleys, and alpine landscapes.",
+      image: "/image/image1.jpeg",
       activities: ["Hiking", "Photography", "Wildlife"]
     },
     {
       id: 2,
       name: "Coastal Wonders",
       region: "Coast",
-      description: "Discover hidden beaches, dramatic cliffs, and crystal-clear waters along the pristine coastline.",
-      image: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=600&fit=crop",
+      description: "Although Gilgit-Baltistan has no sea coast, it offers beautiful lakes and rivers that create a similar peaceful water experience. Famous lakes like Attabad Lake and Satpara lake attract tourists with crystal-clear blue water and boating activities.",
+      image: "/image/image2.jpg",
       activities: ["Beach", "Snorkeling", "Sunset Watching"]
     },
     {
       id: 3,
       name: "Ancient Forest Trek",
       region: "Forest",
-      description: "Journey through centuries-old forests with towering trees and hidden waterfalls.",
-      image: "https://images.unsplash.com/photo-1511497584788-876760111969?w=800&h=600&fit=crop",
+      description: "The forests of Gilgit-Baltistan provide excellent trekking opportunities. Areas like Deosai National Park and nearby valleys feature rich wildlife, alpine plants, and peaceful forest trails.",
+      image: "/image/image3.png",
       activities: ["Hiking", "Nature Study", "Camping"]
     },
     {
       id: 4,
       name: "Desert Expedition",
       region: "Desert",
-      description: "Explore vast sand dunes and experience stunning sunrises in the golden desert.",
-      image: "https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=800&h=600&fit=crop",
+      description: "Visitors can explore the unique cold desert landscape of SarfaRanga Cold Desert, where sand dunes exist between high mountains. This rare desert offers jeep safaris, photography spots, and stunning sunset views.",
+      image: "/image/image4.webp",
       activities: ["Safari", "Stargazing", "Photography"]
     }
   ],
@@ -121,55 +121,46 @@ export const initialData: TourData = {
     }
   ],
   testimonials: [
-    {
-      name: "Michael Chen",
-      rating: 5,
-      text: "Sarah made our mountain trek absolutely unforgettable! Her knowledge and enthusiasm brought every location to life.",
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop"
-    },
-    {
-      name: "Emma Rodriguez",
-      rating: 5,
-      text: "The coastal tour was beyond amazing. Sarah's attention to detail and care for our group was exceptional.",
-      image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop"
-    },
-    {
-      name: "David Kim",
-      rating: 5,
-      text: "Best adventure guide ever! Professional, fun, and truly passionate about creating memorable experiences.",
-      image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop"
-    }
+    // {
+    //   name: "Michael Chen",
+    //   rating: 5,
+    //   text: "Sarah made our mountain trek absolutely unforgettable! Her knowledge and enthusiasm brought every location to life.",
+    //   image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop"
+    // },
+    // {
+    //   name: "Emma Rodriguez",
+    //   rating: 5,
+    //   text: "The coastal tour was beyond amazing. Sarah's attention to detail and care for our group was exceptional.",
+    //   image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop"
+    // },
+    // {
+    //   name: "David Kim",
+    //   rating: 5,
+    //   text: "Best adventure guide ever! Professional, fun, and truly passionate about creating memorable experiences.",
+    //   image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop"
+    // }
   ],
   gallery: [
     {
       id: 1,
       category: "Mountains",
-      image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop"
+      image: "/image/image1.jpeg"
     },
     {
       id: 2,
       category: "Coast",
-      image: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=600&fit=crop"
+      image: "/image/image2.jpg"
     },
     {
       id: 3,
       category: "Forest",
-      image: "https://images.unsplash.com/photo-1511497584788-876760111969?w=800&h=600&fit=crop"
-    },
-    {
-      id: 4,
-      category: "Mountains",
-      image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&h=600&fit=crop"
-    },
-    {
-      id: 5,
-      category: "Coast",
-      image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=600&fit=crop"
+      image: "/image/image3.png"
     },
     {
       id: 6,
       category: "Desert",
-      image: "https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=800&h=600&fit=crop"
+      image: "/image/image4.webp"
+
     }
   ]
 };

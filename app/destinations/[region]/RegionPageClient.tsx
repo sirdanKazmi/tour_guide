@@ -31,30 +31,6 @@ export default function RegionPageClient({ region }: RegionPageClientProps) {
       {/* Hero Section */}
       <RegionHero region={region} />
 
-      {/* Sticky CTA Button - Mobile */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 p-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 lg:hidden">
-        <a
-          href={`/hotels/${region.id}`}
-          className="flex items-center justify-center gap-2 w-full px-6 py-3.5 bg-gradient-to-r from-sky-500 to-blue-600 text-white rounded-full font-semibold shadow-lg shadow-sky-500/25"
-        >
-          <Hotel className="w-5 h-5" />
-          Explore Hotels in {region.name}
-          <ArrowRight className="w-4 h-4" />
-        </a>
-      </div>
-
-      {/* Desktop Sticky CTA */}
-      <div className="hidden lg:block fixed bottom-8 right-8 z-40">
-        <a
-          href={`/hotels/${region.id}`}
-          className="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-sky-500 to-blue-600 text-white rounded-full font-semibold shadow-xl shadow-sky-500/30 hover:shadow-sky-500/50 hover:scale-105 transition-all"
-        >
-          <Hotel className="w-5 h-5" />
-          Explore Hotels in {region.name}
-          <ArrowRight className="w-4 h-4" />
-        </a>
-      </div>
-
       {/* Quick Info Bar */}
       <section className="py-8 px-4 sm:px-6 lg:px-8 bg-slate-50 dark:bg-slate-800/50 border-y border-slate-200 dark:border-slate-800">
         <div className="max-w-7xl mx-auto">

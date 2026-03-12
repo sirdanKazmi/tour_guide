@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Adventure Guide - Tour & Travel",
+  title: "Smile For Miles - Tour & Travel",
   description: "Explore amazing destinations with professional tour guides",
 };
 
@@ -25,7 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className="light">
+    <html lang="en" suppressHydrationWarning className="light" data-scroll-behavior="smooth">
       <head>
         <script
           dangerouslySetInnerHTML={{
