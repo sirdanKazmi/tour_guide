@@ -22,7 +22,7 @@ const DestinationsPageComponent: React.FC<DestinationsPageProps> = ({ data }) =>
   const filtered = filter === 'All' ? data.destinations : data.destinations.filter((d) => d.region === filter);
 
   return (
-    <div className="min-h-screen pt-24 pb-20 px-4">
+    <div className="min-h-screen bg-white dark:bg-slate-900 pt-24 pb-20 px-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <FadeIn className="text-center mb-8 sm:mb-12 px-4">

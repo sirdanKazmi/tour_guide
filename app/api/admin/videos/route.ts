@@ -85,14 +85,15 @@ export async function PUT(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const body = await request.json();
-        const { id, ...updates } = body;
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get('id');
 
         if (!id) {
             return NextResponse.json({ error: 'Video ID is required' }, { status: 400 });
         }
 
-        updateVideo(id, updates);
+        const body = await request.json();
+        updateVideo(parseInt(id), body);
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error('Error updating video:', error);

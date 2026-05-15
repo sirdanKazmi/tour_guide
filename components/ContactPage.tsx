@@ -26,15 +26,44 @@ const ContactPageComponent: React.FC<ContactPageProps> = ({ data }) => {
   });
   const [submitted, setSubmitted] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
-    setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
-      setFormData({ name: '', email: '', message: '', tripDates: '' });
-    }, 3000);
+    setIsSubmitting(true);
+    setSubmitError('');
+    setSubmitted(false);
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          trip_dates: formData.tripDates,
+          message: formData.message,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSubmitted(true);
+        setFormData({ name: '', email: '', message: '', tripDates: '' });
+        // Hide success message after 5 seconds
+        setTimeout(() => {
+          setSubmitted(false);
+        }, 5000);
+      } else {
+        setSubmitError(data.error || 'Failed to send message');
+      }
+    } catch (error) {
+      setSubmitError('Failed to send message. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const inputClasses = "w-full px-4 py-3 rounded-xl border-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none transition-all duration-300";
@@ -63,7 +92,7 @@ const ContactPageComponent: React.FC<ContactPageProps> = ({ data }) => {
   ];
 
   return (
-    <div className="min-h-screen pt-24 pb-20 px-4">
+    <div className="min-h-screen bg-white dark:bg-slate-900 pt-24 pb-20 px-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <FadeIn className="text-center mb-8 sm:mb-12 px-4">
@@ -168,10 +197,20 @@ const ContactPageComponent: React.FC<ContactPageProps> = ({ data }) => {
                   type="submit"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="w-full px-8 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center gap-2"
+                  disabled={isSubmitting}
+                  className="w-full px-8 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Send size={20} />
-                  Send Message
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send size={20} />
+                      Send Message
+                    </>
+                  )}
                 </motion.button>
 
                 {/* Success Message */}
@@ -184,7 +223,21 @@ const ContactPageComponent: React.FC<ContactPageProps> = ({ data }) => {
                       className="text-center text-emerald-600 font-semibold flex items-center justify-center gap-2"
                     >
                       <CheckCircle size={20} />
-                      Message sent successfully! I&apos;ll get back to you soon.
+                      Your message has been sent! We will contact you soon.
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Error Message */}
+                <AnimatePresence>
+                  {submitError && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="text-center text-red-600 font-semibold"
+                    >
+                      {submitError}
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -264,7 +317,7 @@ const ContactPageComponent: React.FC<ContactPageProps> = ({ data }) => {
               >
                 <iframe
                   title="Location Map"
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3151.8354345093743!2d144.9537353!3d-37.8172139!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x6ad65d4c2b349649%3A0xb6899234e561db11!2sEnvato!5e0!3m2!1sen!2sau!4v1234567890"
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3293.8765432109876!2d75.60987654321098!3d35.29876543210987!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x38e35b8c8b8b8b8b%3A0x0!2sMain%20Bazaar%2C%20Skardu%2C%20Gilgit-Baltistan%2C%20Pakistan!5e0!3m2!1sen!2spk!4v1234567890"
                   width="100%"
                   height="100%"
                   style={{ border: 0 }}

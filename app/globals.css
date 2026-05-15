@@ -1,5 +1,19 @@
 @import "tailwindcss";
 
+/* Dark mode configuration for Tailwind v4 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Configure dark mode to use class strategy */
+@layer base {
+  .dark {
+    color-scheme: dark;
+  }
+  
+  .light {
+    color-scheme: light;
+  }
+}
+
 :root {
   --background: #ffffff;
   --foreground: #0f172a;
@@ -555,4 +569,12 @@ h1, h2, h3, h4, h5, h6 {
 ::selection {
   background: rgba(16, 185, 129, 0.3);
   color: inherit;
+}
+
+/* Hide public navbar and footer on admin pages */
+.admin-page ~ nav.fixed,
+.admin-page ~ footer,
+body:has(.admin-page) nav.fixed,
+body:has(.admin-page) footer {
+  display: none !important;
 }

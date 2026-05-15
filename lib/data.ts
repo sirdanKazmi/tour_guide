@@ -56,11 +56,11 @@ export const initialData: TourData = {
     bio: "With over 10 years of experience exploring the world's most breathtaking destinations, I'm passionate about creating unforgettable journeys. From mountain peaks to hidden coastal gems, I've guided hundreds of travelers to discover the beauty and culture of extraordinary places.",
     profilePhoto: "/about/about.png",
     phone: "03249429323",
-    whatsapp: "03249429323",
-    email: "shyedhidayat.hashmi@gmail.com",
+    whatsapp: "923249429323",
+    email: "baltrotraders1234@gmail.com",
     address: " Main Bazaar, Skardu, Gilgit-Baltistan, Pakistan ",
     socials: {
-      instagram: "https://www.instagram.com/smilesmiles1234/?hl=en",
+      instagram: "https://www.instagram.com/smilesmiles1234/",
       facebook: "https://www.facebook.com/syedhidayat.hashmi"
     }
   },

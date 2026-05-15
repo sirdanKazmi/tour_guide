@@ -22,7 +22,8 @@ const AboutPageComponent: React.FC<AboutPageProps> = ({ data }) => {
     { year: "2017", event: "Certified Adventure Travel Guide" },
     { year: "2019", event: "Led first international expedition" },
     { year: "2022", event: "500+ successful tours completed" },
-    { year: "2024", event: "Expanded to coastal adventures" }
+    { year: "2024", event: "Expanded to coastal adventures" },
+    { year: "2026", event: "Launched premium luxury tour packages" }
   ];
 
   const stats = [
@@ -38,7 +39,7 @@ const AboutPageComponent: React.FC<AboutPageProps> = ({ data }) => {
   ];
 
   return (
-    <div className="min-h-screen pt-20 sm:pt-24 pb-12 sm:pb-20 px-4">
+    <div className="min-h-screen bg-white dark:bg-slate-900 pt-20 sm:pt-24 pb-12 sm:pb-20 px-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <FadeIn className="text-center mb-10 sm:mb-16">

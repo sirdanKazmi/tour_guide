@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, Video, Image, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Video, Image, LogOut, Menu, X, PlaneTakeoff, Compass, Users, Mail, DollarSign, Star, Settings, Shield } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
@@ -13,8 +13,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     useEffect(() => {
-        // Skip auth check for login page
-        if (pathname === '/admin/login') {
+        // Skip auth check for login and register pages
+        if (pathname === '/admin/login' || pathname === '/admin/register') {
             setLoading(false);
             return;
         }
@@ -43,7 +43,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         router.push('/admin/login');
     };
 
-    if (pathname === '/admin/login') {
+    if (pathname === '/admin/login' || pathname === '/admin/register') {
         return <>{children}</>;
     }
 
@@ -61,12 +61,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     const navItems = [
         { href: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+        { href: '/admin/bookings', icon: PlaneTakeoff, label: 'Bookings' },
+        { href: '/admin/tours', icon: Compass, label: 'Tour Packages' },
+        { href: '/admin/customers', icon: Users, label: 'Customers' },
+        { href: '/admin/inquiries', icon: Mail, label: 'Inquiries' },
+        { href: '/admin/revenue', icon: DollarSign, label: 'Revenue' },
+        { href: '/admin/reviews', icon: Star, label: 'Reviews' },
         { href: '/admin/videos', icon: Video, label: 'Videos' },
         { href: '/admin/gallery', icon: Image, label: 'Gallery' },
+        { href: '/admin/settings', icon: Settings, label: 'Settings' },
+        { href: '/admin/team', icon: Shield, label: 'Team' },
     ];
 
     return (
-        <div className="min-h-screen bg-slate-100 dark:bg-slate-900">
+        <div className="min-h-screen bg-slate-100 dark:bg-slate-900 pt-15">
             {/* Mobile menu button */}
             <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -80,7 +88,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 className={`fixed top-0 left-0 h-full w-64 bg-white dark:bg-slate-800 shadow-xl transform transition-transform duration-300 z-40 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
                     } lg:translate-x-0`}
             >
-                <div className="p-6">
+                <div className="p-6 pt-8">
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-8">
                         Admin Panel
                     </h1>
@@ -117,7 +125,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </aside>
 
             {/* Main content */}
-            <main className="lg:ml-64 p-8">
+            <main className="lg:ml-64 p-8 pt-24 lg:pt-8">
                 {children}
             </main>
 

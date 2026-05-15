@@ -5,13 +5,90 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, Sun, Moon, Plane, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { supabase } from '@/lib/supabaseClient';
 
 const Navigation: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [destinationsOpen, setDestinationsOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [bookingModalOpen, setBookingModalOpen] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const pathname = usePathname();
+
+  // Don't render navigation on admin pages
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
+
+  const validateForm = (formData: FormData): boolean => {
+    const errors: Record<string, string> = {};
+    
+    if (!formData.get('name')) {
+      errors.name = 'Name is required';
+    }
+    if (!formData.get('email')) {
+      errors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.get('email') as string)) {
+      errors.email = 'Please enter a valid email';
+    }
+    if (!formData.get('phone')) {
+      errors.phone = 'Phone number is required';
+    }
+    if (!formData.get('tour')) {
+      errors.tour = 'Please select a destination';
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleBookingSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    // Validate form
+    if (!validateForm(formData)) {
+      return;
+    }
+
+    try {
+      // Insert booking directly into Supabase with exact column names
+      const { data, error } = await supabase
+        .from('bookings')
+        .insert([
+          { 
+            customer_name: formData.get('name'),
+            email: formData.get('email'),
+            phone: formData.get('phone'),
+            tour_name: formData.get('tour'),
+            travel_date: formData.get('date') || new Date().toISOString().split('T')[0],
+          }
+        ]);
+
+      if (error) {
+        console.error('Supabase error:', error);
+        alert('Failed to submit booking. Please try again.');
+        return;
+      }
+
+      console.log('Booking submitted successfully:', data);
+      alert('Booking submitted successfully! We will contact you soon.');
+      setBookingModalOpen(false);
+      setFormErrors({});
+      
+      // Reset form after a small delay to ensure modal closes first
+      setTimeout(() => {
+        if (form) {
+          form.reset();
+        }
+      }, 100);
+    } catch (error) {
+      console.error('Error submitting booking:', error);
+      alert('An unexpected error occurred. Please try again.');
+    }
+  };
 
   useEffect(() => {
     const savedDarkMode = localStorage.getItem('darkMode');
@@ -79,7 +156,7 @@ const Navigation: React.FC = () => {
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         scrolled
           ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl shadow-lg shadow-slate-200/20 dark:shadow-slate-900/20'
-          : 'bg-transparent'
+          : 'bg-white dark:bg-slate-900'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -87,25 +164,17 @@ const Navigation: React.FC = () => {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 cursor-pointer group">
             <motion.div
-              className={`relative w-10 h-10 rounded-xl flex items-center justify-center ${
-                scrolled 
-                  ? 'bg-gradient-to-br from-sky-500 to-blue-600' 
-                  : 'bg-white/20 backdrop-blur-sm'
-              }`}
+              className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center"
               whileHover={{ rotate: 15 }}
               transition={{ type: 'spring', stiffness: 300 }}
             >
-              <Plane className={`w-5 h-5 ${scrolled ? 'text-white' : 'text-white'}`} />
+              <Plane className="w-5 h-5 text-white" />
             </motion.div>
             <div className="flex flex-col">
-              <span className={`text-lg sm:text-xl font-bold tracking-tight ${
-                scrolled ? 'text-slate-900 dark:text-white' : 'text-white'
-              }`}>
+              <span className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">
                 Smile For Miles
               </span>
-              <span className={`text-[10px] sm:text-xs tracking-widest uppercase ${
-                scrolled ? 'text-sky-600 dark:text-sky-400' : 'text-white/80'
-              }`}>
+              <span className="text-[10px] sm:text-xs tracking-widest uppercase text-sky-600 dark:text-sky-400">
                 Travel
               </span>
             </div>
@@ -122,23 +191,15 @@ const Navigation: React.FC = () => {
                 whileTap={{ scale: 0.95 }}
                 className={`relative px-4 py-2 text-sm font-medium transition-colors rounded-full cursor-pointer ${
                   isActive('/')
-                    ? scrolled 
-                      ? 'text-sky-600 dark:text-sky-400' 
-                      : 'text-white'
-                    : scrolled
-                      ? 'text-slate-600 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400'
-                      : 'text-white/80 hover:text-white'
+                    ? 'text-sky-600 dark:text-sky-400'
+                    : 'text-slate-700 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400'
                 }`}
               >
                 Home
                 {isActive('/') && (
                   <motion.div
                     layoutId="activeNav"
-                    className={`absolute inset-0 rounded-full -z-10 ${
-                      scrolled 
-                        ? 'bg-sky-50 dark:bg-sky-900/20' 
-                        : 'bg-white/20'
-                    }`}
+                    className="absolute inset-0 rounded-full -z-10 bg-sky-50 dark:bg-sky-900/20"
                     transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                   />
                 )}
@@ -160,12 +221,8 @@ const Navigation: React.FC = () => {
                   whileTap={{ scale: 0.95 }}
                   className={`relative px-4 py-2 text-sm font-medium transition-colors rounded-full flex items-center gap-1 cursor-pointer ${
                     isDestinationsActive
-                      ? scrolled 
-                        ? 'text-sky-600 dark:text-sky-400' 
-                        : 'text-white'
-                      : scrolled
-                        ? 'text-slate-600 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400'
-                        : 'text-white/80 hover:text-white'
+                      ? 'text-sky-600 dark:text-sky-400'
+                      : 'text-slate-700 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400'
                   }`}
                 >
                   Destinations
@@ -173,11 +230,7 @@ const Navigation: React.FC = () => {
                   {isDestinationsActive && (
                     <motion.div
                       layoutId="activeNav"
-                      className={`absolute inset-0 rounded-full -z-10 ${
-                        scrolled 
-                          ? 'bg-sky-50 dark:bg-sky-900/20' 
-                          : 'bg-white/20'
-                      }`}
+                      className="absolute inset-0 rounded-full -z-10 bg-sky-50 dark:bg-sky-900/20"
                       transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                     />
                   )}
@@ -225,23 +278,15 @@ const Navigation: React.FC = () => {
                   whileTap={{ scale: 0.95 }}
                   className={`relative px-4 py-2 text-sm font-medium transition-colors rounded-full cursor-pointer ${
                     isActive(link.href)
-                      ? scrolled 
-                        ? 'text-sky-600 dark:text-sky-400' 
-                        : 'text-white'
-                      : scrolled
-                        ? 'text-slate-600 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400'
-                        : 'text-white/80 hover:text-white'
+                      ? 'text-sky-600 dark:text-sky-400'
+                      : 'text-slate-700 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400'
                   }`}
                 >
                   {link.label}
                   {isActive(link.href) && (
                     <motion.div
                       layoutId="activeNav"
-                      className={`absolute inset-0 rounded-full -z-10 ${
-                        scrolled 
-                          ? 'bg-sky-50 dark:bg-sky-900/20' 
-                          : 'bg-white/20'
-                      }`}
+                      className="absolute inset-0 rounded-full -z-10 bg-sky-50 dark:bg-sky-900/20"
                       transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                     />
                   )}
@@ -273,7 +318,7 @@ const Navigation: React.FC = () => {
                     exit={{ opacity: 0, rotate: 90, scale: 0.5 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <Sun className={`w-5 h-5 ${scrolled ? 'text-amber-500' : 'text-white'}`} />
+                    <Sun className="w-5 h-5 text-amber-500" />
                   </motion.div>
                 ) : (
                   <motion.div
@@ -283,26 +328,25 @@ const Navigation: React.FC = () => {
                     exit={{ opacity: 0, rotate: -90, scale: 0.5 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <Moon className={`w-5 h-5 ${scrolled ? 'text-slate-600' : 'text-white'}`} />
+                    <Moon className="w-5 h-5 text-slate-700 dark:text-slate-300" />
                   </motion.div>
                 )}
               </AnimatePresence>
             </motion.button>
 
             {/* CTA Button - Desktop */}
-            <Link href="/contact">
-              <motion.span
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                className={`hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-full font-semibold text-sm transition-all cursor-pointer ${
-                  scrolled
-                    ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/25 hover:shadow-sky-500/40'
-                    : 'bg-white text-sky-600 shadow-lg hover:shadow-xl'
-                }`}
-              >
-                Book Now
-              </motion.span>
-            </Link>
+            <motion.button
+              onClick={() => setBookingModalOpen(true)}
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              className={`hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-full font-semibold text-sm transition-all cursor-pointer ${
+                scrolled
+                  ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/25 hover:shadow-sky-500/40'
+                  : 'bg-white text-sky-600 shadow-lg hover:shadow-xl'
+              }`}
+            >
+              Book Now
+            </motion.button>
 
             {/* Mobile Menu Button */}
             <motion.button
@@ -324,7 +368,7 @@ const Navigation: React.FC = () => {
                     exit={{ opacity: 0, rotate: 90 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <X className={`w-6 h-6 ${scrolled ? 'text-slate-900 dark:text-white' : 'text-white'}`} />
+                    <X className="w-6 h-6 text-slate-900 dark:text-white" />
                   </motion.div>
                 ) : (
                   <motion.div
@@ -334,7 +378,7 @@ const Navigation: React.FC = () => {
                     exit={{ opacity: 0, rotate: -90 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <Menu className={`w-6 h-6 ${scrolled ? 'text-slate-900 dark:text-white' : 'text-white'}`} />
+                    <Menu className="w-6 h-6 text-slate-900 dark:text-white" />
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -427,17 +471,177 @@ const Navigation: React.FC = () => {
               ))}
               
               {/* Mobile CTA */}
-              <Link href="/contact" onClick={() => setMobileMenuOpen(false)}>
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="w-full mt-4 px-4 py-3 bg-gradient-to-r from-sky-500 to-blue-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-sky-500/25 text-center"
-                >
-                  Book Your Trip
-                </motion.div>
-              </Link>
+              <motion.button
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                onClick={() => {
+                  setBookingModalOpen(true);
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full mt-4 px-4 py-3 bg-gradient-to-r from-sky-500 to-blue-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-sky-500/25 text-center"
+              >
+                Book Your Trip
+              </motion.button>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Booking Modal */}
+      <AnimatePresence>
+        {bookingModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            onClick={() => setBookingModalOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+            >
+              {/* Modal Header */}
+              <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Book Your Trip</h2>
+                  <button
+                    onClick={() => setBookingModalOpen(false)}
+                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors"
+                  >
+                    <X className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Booking Form */}
+              <form onSubmit={handleBookingSubmit} className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Your Name *
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    className={`w-full px-4 py-3 rounded-xl border ${
+                      formErrors.name ? 'border-red-500' : 'border-slate-300 dark:border-slate-600'
+                    } bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-sky-500 focus:border-transparent`}
+                    placeholder="John Doe"
+                  />
+                  {formErrors.name && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Email Address *
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    className={`w-full px-4 py-3 rounded-xl border ${
+                      formErrors.email ? 'border-red-500' : 'border-slate-300 dark:border-slate-600'
+                    } bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-sky-500 focus:border-transparent`}
+                    placeholder="john@example.com"
+                  />
+                  {formErrors.email && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.email}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Phone Number *
+                  </label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    className={`w-full px-4 py-3 rounded-xl border ${
+                      formErrors.phone ? 'border-red-500' : 'border-slate-300 dark:border-slate-600'
+                    } bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-sky-500 focus:border-transparent`}
+                    placeholder="03XXXXXXXXX"
+                  />
+                  {formErrors.phone && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.phone}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Preferred Tour / Destination *
+                  </label>
+                  <select
+                    name="tour"
+                    className={`w-full px-4 py-3 rounded-xl border ${
+                      formErrors.tour ? 'border-red-500' : 'border-slate-300 dark:border-slate-600'
+                    } bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-sky-500 focus:border-transparent`}
+                  >
+                    <option value="">Select a destination</option>
+                    <option value="Skardu">Skardu</option>
+                    <option value="Hunza">Hunza</option>
+                    <option value="Gilgit">Gilgit</option>
+                    <option value="Khaplu">Khaplu</option>
+                    <option value="Astore">Astore</option>
+                    <option value="Nagar">Nagar</option>
+                    <option value="Ghizer">Ghizer</option>
+                    <option value="Shigar">Shigar</option>
+                    <option value="Ghanche">Ghanche</option>
+                  </select>
+                  {formErrors.tour && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.tour}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Preferred Travel Date
+                  </label>
+                  <input
+                    type="date"
+                    name="date"
+                    min={new Date().toISOString().split('T')[0]}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Number of People
+                  </label>
+                  <input
+                    type="number"
+                    name="people"
+                    min="1"
+                    defaultValue="1"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Special Requests / Message
+                  </label>
+                  <textarea
+                    name="message"
+                    rows={3}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+                    placeholder="Tell us about your dream trip..."
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-3 bg-gradient-to-r from-sky-500 to-blue-600 text-white rounded-xl font-semibold shadow-lg shadow-sky-500/25 hover:shadow-sky-500/40 transition-all"
+                >
+                  Submit Booking Request
+                </button>
+              </form>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

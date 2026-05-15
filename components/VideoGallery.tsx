@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, X, Film, Clock, Eye } from 'lucide-react';
+import { Play, ExternalLink, Film, Clock, Eye, MonitorPlay } from 'lucide-react';
 import { FadeIn, Card3D, GlowCard } from '@/components/animations';
 
 interface VideoGalleryProps {
@@ -41,11 +41,41 @@ const VideoGallery: React.FC<VideoGalleryProps> = ({ setCurrentPage }) => {
         }
     };
 
+    // Extract YouTube thumbnail from URL
+    const getYouTubeThumbnail = (url: string): string | null => {
+        const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+        return match ? `https://img.youtube.com/vi/${match[1]}/maxresdefault.jpg` : null;
+    };
+
+    // Extract Facebook video thumbnail
+    const getFacebookThumbnail = (url: string): string | null => {
+        // Facebook doesn't provide easy thumbnail extraction, return null
+        return null;
+    };
+
+    // Get thumbnail for any video URL
+    const getVideoThumbnail = (video: Video): string | null => {
+        // Priority 1: Uploaded thumbnail
+        if (video.thumbnail_url) return video.thumbnail_url;
+        
+        // Priority 2: YouTube auto-thumbnail
+        const youtubeThumb = getYouTubeThumbnail(video.video_url);
+        if (youtubeThumb) return youtubeThumb;
+        
+        // Priority 3: Uploaded video file - try to get first frame
+        if (video.video_url.includes('/uploads/videos/')) {
+            // For uploaded videos, we'll use a default thumbnail or the thumbnail if provided
+            return null;
+        }
+        
+        return null;
+    };
+
     const categories = ['All', ...new Set(videos.map((v) => v.category))];
     const filteredVideos = filter === 'All' ? videos : videos.filter((v) => v.category === filter);
 
     return (
-        <div className="min-h-screen pt-24 pb-20 px-4">
+        <div className="min-h-screen bg-white dark:bg-slate-900 pt-24 pb-20 px-4">
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
                 <FadeIn className="text-center mb-8 sm:mb-12 px-4">
@@ -119,7 +149,12 @@ const VideoGallery: React.FC<VideoGalleryProps> = ({ setCurrentPage }) => {
                             transition={{ duration: 0.3 }}
                             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-4"
                         >
-                            {filteredVideos.map((video, idx) => (
+                            {filteredVideos.map((video, idx) => {
+                                // Get thumbnail using the helper function
+                                const thumbnailSrc = getVideoThumbnail(video);
+                                const hasThumbnail = !!thumbnailSrc;
+                                
+                                return (
                                 <motion.div
                                     key={video.id}
                                     layout
@@ -130,146 +165,280 @@ const VideoGallery: React.FC<VideoGalleryProps> = ({ setCurrentPage }) => {
                                 >
                                     <Card3D className="h-full" intensity={8}>
                                         <GlowCard
-                                            className="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden cursor-pointer h-full"
+                                            className="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden h-full"
                                             glowColor="rgba(16, 185, 129, 0.1)"
                                         >
-                                            <motion.div
-                                                onClick={() => setSelectedVideo(video)}
-                                                className="relative aspect-video bg-slate-200 dark:bg-slate-700 overflow-hidden"
-                                                whileHover={{ scale: 1.02 }}
-                                            >
-                                                {video.thumbnail_url ? (
+                                            {/* Video Player Section - Always visible */}
+                                            <div className="relative aspect-video bg-slate-900">
+                                                {/* Uploaded video file - play directly */}
+                                                {video.video_url.includes('/uploads/videos/') || 
+                                                 video.video_url.match(/\.(mp4|webm|ogg)$/i) ? (
+                                                    <video
+                                                        src={video.video_url}
+                                                        controls
+                                                        preload="metadata"
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : video.video_url.includes('youtube.com') || video.video_url.includes('youtu.be') ? (
+                                                    // YouTube embed
+                                                    <iframe
+                                                        src={video.video_url.replace('/watch?v=', '/embed/').replace('youtu.be/', 'youtube.com/embed/')}
+                                                        title={video.title}
+                                                        className="w-full h-full"
+                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                        allowFullScreen
+                                                    />
+                                                ) : video.video_url.includes('tiktok.com') ? (
+                                                    // TikTok embed
+                                                    <iframe
+                                                        src={`https://www.tiktok.com/embed/v2/${video.video_url.split('/video/')[1]?.split('?')[0]}`}
+                                                        title={video.title}
+                                                        className="w-full h-full"
+                                                        allow="encrypted-media"
+                                                    />
+                                                ) : video.video_url.includes('facebook.com') || video.video_url.includes('fb.watch') ? (
+                                                    // Facebook - show thumbnail with watch button
+                                                    <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-blue-600 to-blue-800 text-white p-4">
+                                                        <MonitorPlay size={48} className="mb-3" />
+                                                        <p className="text-sm font-semibold mb-3 text-center">Facebook Video</p>
+                                                        <a
+                                                            href={video.video_url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="bg-white text-blue-600 px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-2 hover:bg-blue-50 transition-colors"
+                                                        >
+                                                            <ExternalLink size={16} />
+                                                            Watch on Facebook
+                                                        </a>
+                                                    </div>
+                                                ) : video.video_url.includes('instagram.com') ? (
+                                                    // Instagram embed
+                                                    <iframe
+                                                        src={`${video.video_url}/embed`}
+                                                        title={video.title}
+                                                        className="w-full h-full"
+                                                        allow="encrypted-media"
+                                                    />
+                                                ) : hasThumbnail ? (
+                                                    // Show thumbnail for other URLs
                                                     <motion.img
-                                                        src={video.thumbnail_url}
+                                                        src={thumbnailSrc!}
                                                         alt={video.title}
                                                         className="w-full h-full object-cover"
-                                                        whileHover={{ scale: 1.1 }}
-                                                        transition={{ duration: 0.6 }}
                                                     />
                                                 ) : (
-                                                    <div className="flex items-center justify-center h-full">
-                                                        <Play className="text-slate-400" size={64} />
+                                                    <div className="flex items-center justify-center h-full bg-gradient-to-br from-emerald-500 to-teal-600">
+                                                        <Play className="text-white" size={48} />
                                                     </div>
                                                 )}
-                                                
-                                                {/* Overlay */}
-                                                <motion.div
-                                                    className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center"
-                                                    whileHover={{ backgroundColor: 'rgba(0,0,0,0.4)' }}
-                                                >
-                                                    <motion.div
-                                                        className="bg-emerald-600 rounded-full p-4"
-                                                        initial={{ opacity: 0, scale: 0 }}
-                                                        whileHover={{ opacity: 1, scale: 1 }}
-                                                        transition={{ duration: 0.2 }}
-                                                    >
-                                                        <Play className="text-white" size={32} />
-                                                    </motion.div>
-                                                </motion.div>
-                                                
-                                                {/* Duration Badge */}
-                                                {video.duration && (
-                                                    <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
-                                                        <Clock size={12} />
-                                                        {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')}
-                                                    </div>
-                                                )}
-                                            </motion.div>
+                                            </div>
                                             
-                                            <div className="p-4">
-                                                <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-2 line-clamp-1">
-                                                    {video.title}
-                                                </h3>
-                                                <div className="flex items-center justify-between">
+                                            {/* Video Info & Action Buttons */}
+                                            <div className="p-4 space-y-3">
+                                                <div>
+                                                    <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-1 line-clamp-1">
+                                                        {video.title}
+                                                    </h3>
                                                     <span className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">
                                                         {video.category}
                                                     </span>
-                                                    <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                                                        <Eye size={14} /> Watch Now
-                                                    </span>
                                                 </div>
+                                                
                                                 {video.description && (
-                                                    <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 mt-2">
+                                                    <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
                                                         {video.description}
                                                     </p>
+                                                )}
+                                                
+                                                {/* Action Buttons for URL-based videos */}
+                                                {!video.video_url.includes('/uploads/videos/') && 
+                                                 !video.video_url.match(/\.(mp4|webm|ogg)$/i) && (
+                                                    <div className="flex gap-2 pt-2">
+                                                        <button
+                                                            onClick={() => setSelectedVideo(video)}
+                                                            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-colors"
+                                                        >
+                                                            <MonitorPlay size={16} />
+                                                            Watch Here
+                                                        </button>
+                                                        <a
+                                                            href={video.video_url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="flex-1 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white px-3 py-2 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-colors"
+                                                        >
+                                                            <ExternalLink size={16} />
+                                                            Visit Original
+                                                        </a>
+                                                    </div>
                                                 )}
                                             </div>
                                         </GlowCard>
                                     </Card3D>
                                 </motion.div>
-                            ))}
+                            );})}
                         </motion.div>
                     )}
                 </AnimatePresence>
 
-                {/* Video Player Modal */}
+                {/* Video Modal */}
                 <AnimatePresence>
                     {selectedVideo && (
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4"
+                            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
                             onClick={() => setSelectedVideo(null)}
                         >
                             <motion.div
-                                initial={{ opacity: 0, scale: 0.8, y: 50 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.8, y: 50 }}
-                                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                                className="max-w-5xl w-full"
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.9, opacity: 0 }}
+                                className="bg-white dark:bg-slate-800 rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden"
                                 onClick={(e) => e.stopPropagation()}
                             >
-                                {/* Header */}
-                                <div className="flex justify-between items-start mb-4">
+                                {/* Modal Header */}
+                                <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
                                     <div>
-                                        <motion.h2
-                                            initial={{ opacity: 0, x: -20 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: 0.1 }}
-                                            className="text-2xl font-bold text-white mb-2"
-                                        >
+                                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
                                             {selectedVideo.title}
-                                        </motion.h2>
-                                        {selectedVideo.description && (
-                                            <motion.p
-                                                initial={{ opacity: 0, x: -20 }}
-                                                animate={{ opacity: 1, x: 0 }}
-                                                transition={{ delay: 0.2 }}
-                                                className="text-slate-300"
-                                            >
-                                                {selectedVideo.description}
-                                            </motion.p>
-                                        )}
+                                        </h2>
+                                        <p className="text-sm text-emerald-600 dark:text-emerald-400 mt-1">
+                                            {selectedVideo.category}
+                                        </p>
                                     </div>
-                                    <motion.button
-                                        initial={{ opacity: 0, scale: 0 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        exit={{ opacity: 0, scale: 0 }}
-                                        whileHover={{ scale: 1.1, rotate: 90 }}
+                                    <button
                                         onClick={() => setSelectedVideo(null)}
-                                        className="text-white hover:text-slate-300 p-2 bg-white/10 backdrop-blur-sm rounded-full"
+                                        className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
                                     >
-                                        <X size={32} />
-                                    </motion.button>
+                                        <ExternalLink size={24} />
+                                    </button>
                                 </div>
-                                
-                                {/* Video Player */}
-                                <motion.div
-                                    initial={{ opacity: 0, scale: 0.95 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ delay: 0.1 }}
-                                    className="relative rounded-xl overflow-hidden shadow-2xl"
-                                >
-                                    <video
-                                        src={selectedVideo.video_url}
-                                        controls
-                                        autoPlay
-                                        className="w-full"
-                                    >
-                                        Your browser does not support the video tag.
-                                    </video>
-                                </motion.div>
+
+                                {/* Video Container */}
+                                <div className="aspect-video bg-slate-900 relative">
+                                    {/* Check if it's an uploaded video file */}
+                                    {selectedVideo.video_url.includes('/uploads/videos/') || 
+                                     selectedVideo.video_url.match(/\.(mp4|webm|ogg)$/i) ? (
+                                        // Play uploaded video file directly
+                                        <video
+                                            src={selectedVideo.video_url}
+                                            controls
+                                            autoPlay
+                                            className="w-full h-full"
+                                        />
+                                    ) : selectedVideo.video_url.includes('youtube.com') || selectedVideo.video_url.includes('youtu.be') ? (
+                                        // YouTube - try to embed, fallback to link
+                                        <>
+                                            <iframe
+                                                src={selectedVideo.video_url.replace('/watch?v=', '/embed/').replace('youtu.be/', 'youtube.com/embed/')}
+                                                title={selectedVideo.title}
+                                                className="w-full h-full"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                allowFullScreen
+                                            />
+                                            <div className="absolute top-4 right-4">
+                                                <a
+                                                    href={selectedVideo.video_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="bg-white/90 hover:bg-white text-slate-900 px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-2 transition-all shadow-lg"
+                                                >
+                                                    <ExternalLink size={16} />
+                                                    Watch on YouTube
+                                                </a>
+                                            </div>
+                                        </>
+                                    ) : selectedVideo.video_url.includes('tiktok.com') ? (
+                                        // TikTok - embed
+                                        <>
+                                            <iframe
+                                                src={`https://www.tiktok.com/embed/v2/${selectedVideo.video_url.split('/video/')[1]?.split('?')[0]}`}
+                                                title={selectedVideo.title}
+                                                className="w-full h-full"
+                                                allow="encrypted-media"
+                                            />
+                                            <div className="absolute top-4 right-4">
+                                                <a
+                                                    href={selectedVideo.video_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="bg-white/90 hover:bg-white text-slate-900 px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-2 transition-all shadow-lg"
+                                                >
+                                                    <ExternalLink size={16} />
+                                                    Watch on TikTok
+                                                </a>
+                                            </div>
+                                        </>
+                                    ) : selectedVideo.video_url.includes('facebook.com') || selectedVideo.video_url.includes('fb.watch') ? (
+                                        // Facebook - show button to visit (embedding often fails due to permissions)
+                                        <div className="flex flex-col items-center justify-center h-full text-white p-8">
+                                            <MonitorPlay size={64} className="mb-4 text-emerald-400" />
+                                            <h3 className="text-xl font-bold mb-2">Watch on Facebook</h3>
+                                            <p className="text-slate-300 mb-6 text-center text-sm">
+                                                This Facebook video requires you to visit Facebook to watch
+                                            </p>
+                                            <a
+                                                href={selectedVideo.video_url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-full font-semibold flex items-center gap-3 transition-all hover:scale-105 shadow-lg"
+                                            >
+                                                <ExternalLink size={20} />
+                                                Watch on Facebook
+                                            </a>
+                                        </div>
+                                    ) : selectedVideo.video_url.includes('instagram.com') ? (
+                                        // Instagram - embed
+                                        <>
+                                            <iframe
+                                                src={`${selectedVideo.video_url}/embed`}
+                                                title={selectedVideo.title}
+                                                className="w-full h-full"
+                                                allow="encrypted-media"
+                                            />
+                                            <div className="absolute top-4 right-4">
+                                                <a
+                                                    href={selectedVideo.video_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="bg-white/90 hover:bg-white text-slate-900 px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-2 transition-all shadow-lg"
+                                                >
+                                                    <ExternalLink size={16} />
+                                                    Watch on Instagram
+                                                </a>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        // Unknown external URL - show button to visit
+                                        <div className="flex flex-col items-center justify-center h-full text-white p-8">
+                                            <MonitorPlay size={64} className="mb-4 text-emerald-400" />
+                                            <h3 className="text-xl font-bold mb-2">Watch on Platform</h3>
+                                            <p className="text-slate-300 mb-6 text-center text-sm">
+                                                This video is hosted externally. Click below to watch.
+                                            </p>
+                                            <a
+                                                href={selectedVideo.video_url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-full font-semibold flex items-center gap-3 transition-all hover:scale-105 shadow-lg"
+                                            >
+                                                <ExternalLink size={20} />
+                                                Watch Video Now
+                                            </a>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Modal Footer */}
+                                {selectedVideo.description && (
+                                    <div className="p-6 border-t border-slate-200 dark:border-slate-700">
+                                        <p className="text-slate-600 dark:text-slate-300">
+                                            {selectedVideo.description}
+                                        </p>
+                                    </div>
+                                )}
                             </motion.div>
                         </motion.div>
                     )}

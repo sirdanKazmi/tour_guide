@@ -1,15 +1,29 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Lock, User } from 'lucide-react';
 
 export default function AdminLoginPage() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const registered = searchParams.get('registered');
+
+    useEffect(() => {
+        if (registered === 'true') {
+            setSuccess('Account created successfully! Please login.');
+            // Clear the query parameter after showing message
+            const timer = setTimeout(() => {
+                router.replace('/admin/login');
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [registered, router]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -94,6 +108,12 @@ export default function AdminLoginPage() {
                             </div>
                         )}
 
+                        {success && (
+                            <div className="bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 px-4 py-3 rounded-lg">
+                                {success}
+                            </div>
+                        )}
+
                         <button
                             type="submit"
                             disabled={loading}
@@ -103,8 +123,16 @@ export default function AdminLoginPage() {
                         </button>
                     </form>
 
-                    <div className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
-                        Default credentials: admin / admin123
+                    <div className="mt-6 text-center space-y-3">
+                        <button
+                            onClick={() => router.push('/admin/register')}
+                            className="block w-full text-sm text-emerald-600 dark:text-emerald-400 hover:underline font-medium"
+                        >
+                            Create New Account
+                        </button>
+                        <div className="text-sm text-slate-600 dark:text-slate-400">
+                            Default credentials: admin / admin123
+                        </div>
                     </div>
                 </div>
             </div>
