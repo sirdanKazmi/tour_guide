@@ -28,6 +28,7 @@ export default function AdminLoginPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+        setSuccess(''); // Clear success message when attempting login
         setLoading(true);
 
         try {

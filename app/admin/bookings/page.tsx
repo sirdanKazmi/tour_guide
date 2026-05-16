@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Search, Filter, Download, Eye, Phone, MessageSquare, RefreshCw, CheckCircle, XCircle, Clock, MoreVertical, X, User, Calendar, Users, DollarSign, MapPin } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface Booking {
     id: number;
@@ -56,7 +57,7 @@ export default function BookingsPage() {
             
             if (response.status === 401) {
                 console.error('Unauthorized - Please log in again');
-                alert('Session expired. Please log in again.');
+                toast.error('Session expired. Please log in again.');
                 window.location.href = '/admin/login';
                 return;
             }

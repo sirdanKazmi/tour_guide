@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Star, CheckCircle, XCircle, Trash2, Search, Filter, RefreshCw, StarOff } from 'lucide-react';
+import { toast } from 'sonner';
+import { useConfirmModal } from '@/hooks/useConfirmModal';
 
 interface Review {
     id: number;
@@ -21,6 +23,7 @@ export default function ReviewsPage() {
     const [statusFilter, setStatusFilter] = useState('all');
     const [search, setSearch] = useState('');
     const [lastRefresh, setLastRefresh] = useState(Date.now());
+    const { show, ConfirmModalComponent } = useConfirmModal();
 
     useEffect(() => {
         fetchReviews();
@@ -35,7 +38,7 @@ export default function ReviewsPage() {
             const response = await fetch(`/api/admin/reviews?${params}`);
             
             if (response.status === 401) {
-                alert('Session expired. Please log in again.');
+                toast.error('Session expired. Please log in again.');
                 window.location.href = '/admin/login';
                 return;
             }
@@ -64,11 +67,11 @@ export default function ReviewsPage() {
                 setReviews(reviews.map(r => 
                     r.id === id ? { ...r, status: newStatus as any } : r
                 ));
-                alert(`Review ${newStatus} successfully`);
+                toast.success(`Review ${newStatus} successfully`);
             }
         } catch (error) {
             console.error('Error updating review status:', error);
-            alert('Failed to update review status');
+            toast.error('Failed to update review status');
         }
     };
 
@@ -84,18 +87,22 @@ export default function ReviewsPage() {
                 setReviews(reviews.map(r => 
                     r.id === id ? { ...r, is_featured: isFeatured } : r
                 ));
-                alert(isFeatured ? 'Review marked as featured' : 'Review unmarked as featured');
+                toast.success(isFeatured ? 'Review marked as featured' : 'Review unmarked as featured');
             }
         } catch (error) {
             console.error('Error toggling featured status:', error);
-            alert('Failed to update featured status');
+            toast.error('Failed to update featured status');
         }
     };
 
     const handleDelete = async (id: number) => {
-        if (!confirm('Are you sure you want to delete this review? This action cannot be undone.')) {
-            return;
-        }
+        const confirmed = await show({
+            title: 'Delete Review',
+            message: 'Are you sure you want to delete this review? This action cannot be undone.',
+            type: 'delete'
+        });
+
+        if (!confirmed) return;
 
         try {
             const response = await fetch(`/api/admin/reviews?id=${id}`, {
@@ -104,11 +111,11 @@ export default function ReviewsPage() {
 
             if (response.ok) {
                 setReviews(reviews.filter(r => r.id !== id));
-                alert('Review deleted successfully');
+                toast.success('Review deleted successfully');
             }
         } catch (error) {
             console.error('Error deleting review:', error);
-            alert('Failed to delete review');
+            toast.error('Failed to delete review');
         }
     };
 
@@ -314,6 +321,7 @@ export default function ReviewsPage() {
                     </div>
                 )}
             </div>
+            <ConfirmModalComponent />
         </div>
     );
 }

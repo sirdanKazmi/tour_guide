@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Users, Plus, Edit, Trash2, X, RefreshCw, Mail, Phone, Shield } from 'lucide-react';
+import { toast } from 'sonner';
+import { useConfirmModal } from '@/hooks/useConfirmModal';
 
 interface TeamMember {
     id: number;
@@ -26,6 +28,7 @@ export default function TeamPage() {
         phone: '',
         password: '',
     });
+    const { show, ConfirmModalComponent } = useConfirmModal();
 
     useEffect(() => {
         fetchTeam();
@@ -37,7 +40,7 @@ export default function TeamPage() {
             const response = await fetch('/api/admin/team');
             
             if (response.status === 401) {
-                alert('Session expired. Please log in again.');
+                toast.error('Session expired. Please log in again.');
                 window.location.href = '/admin/login';
                 return;
             }
@@ -67,7 +70,7 @@ export default function TeamPage() {
                 });
 
                 if (response.ok) {
-                    alert('Team member updated successfully');
+                    toast.success('Team member updated successfully');
                     setShowModal(false);
                     setEditingMember(null);
                     resetForm();
@@ -82,7 +85,7 @@ export default function TeamPage() {
                 });
 
                 if (response.ok) {
-                    alert('Team member added successfully');
+                    toast.success('Team member added successfully');
                     setShowModal(false);
                     resetForm();
                     setLastRefresh(Date.now());
@@ -90,7 +93,7 @@ export default function TeamPage() {
             }
         } catch (error) {
             console.error('Error saving team member:', error);
-            alert('Failed to save team member');
+            toast.error('Failed to save team member');
         }
     };
 
@@ -107,9 +110,13 @@ export default function TeamPage() {
     };
 
     const handleDelete = async (id: number) => {
-        if (!confirm('Are you sure you want to remove this team member? This action cannot be undone.')) {
-            return;
-        }
+        const confirmed = await show({
+            title: 'Remove Team Member',
+            message: 'Are you sure you want to remove this team member? This action cannot be undone.',
+            type: 'delete'
+        });
+
+        if (!confirmed) return;
 
         try {
             const response = await fetch(`/api/admin/team?id=${id}`, {
@@ -118,11 +125,11 @@ export default function TeamPage() {
 
             if (response.ok) {
                 setTeam(team.filter(m => m.id !== id));
-                alert('Team member removed successfully');
+                toast.success('Team member removed successfully');
             }
         } catch (error) {
             console.error('Error deleting team member:', error);
-            alert('Failed to remove team member');
+            toast.error('Failed to remove team member');
         }
     };
 
@@ -405,6 +412,7 @@ export default function TeamPage() {
                     </div>
                 </div>
             )}
+            <ConfirmModalComponent />
         </div>
     );
 }

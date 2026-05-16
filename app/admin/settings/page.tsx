@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Save, RefreshCw, Building, Phone, Mail, MapPin, Link, Globe, Share2, Search } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface Settings {
     business_name: string;
@@ -49,7 +50,7 @@ export default function SettingsPage() {
             const response = await fetch('/api/admin/settings');
             
             if (response.status === 401) {
-                alert('Session expired. Please log in again.');
+                toast.error('Session expired. Please log in again.');
                 window.location.href = '/admin/login';
                 return;
             }
@@ -66,7 +67,7 @@ export default function SettingsPage() {
             }
         } catch (error) {
             console.error('Error fetching settings:', error);
-            alert('Failed to load settings');
+            toast.error('Failed to load settings');
         } finally {
             setLoading(false);
         }
@@ -82,15 +83,15 @@ export default function SettingsPage() {
             });
 
             if (response.ok) {
-                alert('Settings saved successfully!');
+                toast.success('Settings saved successfully!');
                 console.log('Settings saved successfully');
             } else {
                 const error = await response.json();
-                alert(`Failed to save settings: ${error.error}`);
+                toast.error(`Failed to save settings: ${error.error}`);
             }
         } catch (error) {
             console.error('Error saving settings:', error);
-            alert('Failed to save settings');
+            toast.error('Failed to save settings');
         } finally {
             setSaving(false);
         }

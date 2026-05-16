@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { MessageSquare, Phone, Mail, Trash2, RefreshCw, Search, Filter, CheckCircle, Eye } from 'lucide-react';
+import { toast } from 'sonner';
+import { useConfirmModal } from '@/hooks/useConfirmModal';
 
 interface Inquiry {
     id: number;
@@ -22,6 +24,7 @@ export default function InquiriesPage() {
     const [lastRefresh, setLastRefresh] = useState(Date.now());
     const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
+    const { show, ConfirmModalComponent } = useConfirmModal();
 
     useEffect(() => {
         fetchInquiries();
@@ -36,7 +39,7 @@ export default function InquiriesPage() {
             const response = await fetch(`/api/admin/inquiries?${params}`);
             
             if (response.status === 401) {
-                alert('Session expired. Please log in again.');
+                toast.error('Session expired. Please log in again.');
                 window.location.href = '/admin/login';
                 return;
             }
@@ -69,7 +72,7 @@ export default function InquiriesPage() {
             }
         } catch (error) {
             console.error('Error marking inquiry as read:', error);
-            alert('Failed to update inquiry status');
+            toast.error('Failed to update inquiry status');
         }
     };
 
@@ -85,11 +88,11 @@ export default function InquiriesPage() {
                 setInquiries(inquiries.map(i => 
                     i.id === id ? { ...i, status: 'replied' } : i
                 ));
-                alert('Inquiry marked as replied');
+                toast.success('Inquiry marked as replied');
             }
         } catch (error) {
             console.error('Error marking inquiry as replied:', error);
-            alert('Failed to update inquiry status');
+            toast.error('Failed to update inquiry status');
         }
     };
 
@@ -442,6 +445,7 @@ export default function InquiriesPage() {
                     </div>
                 </div>
             )}
+            <ConfirmModalComponent />
         </div>
     );
 }

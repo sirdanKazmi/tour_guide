@@ -6,6 +6,7 @@ import { Menu, X, Sun, Moon, Plane, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
+import { toast } from 'sonner';
 
 const Navigation: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -69,12 +70,12 @@ const Navigation: React.FC = () => {
 
       if (error) {
         console.error('Supabase error:', error);
-        alert('Failed to submit booking. Please try again.');
+        toast.error('Failed to submit booking. Please try again.');
         return;
       }
 
       console.log('Booking submitted successfully:', data);
-      alert('Booking submitted successfully! We will contact you soon.');
+      toast.success('Booking submitted successfully! We will contact you soon.');
       setBookingModalOpen(false);
       setFormErrors({});
       
@@ -86,7 +87,7 @@ const Navigation: React.FC = () => {
       }, 100);
     } catch (error) {
       console.error('Error submitting booking:', error);
-      alert('An unexpected error occurred. Please try again.');
+      toast.error('An unexpected error occurred. Please try again.');
     }
   };
 

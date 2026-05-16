@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/db';
+import bcrypt from 'bcryptjs';
 
 // POST create new admin account
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
         console.log('Registration request body:', body);
-        const { username, email, password } = body;
+        const { username, password } = body;
 
-        if (!username || !email || !password) {
-            console.log('Missing fields:', { username: !!username, email: !!email, password: !!password });
+        if (!username || !password) {
+            console.log('Missing fields:', { username: !!username, password: !!password });
             return NextResponse.json(
-                { error: 'Username, email, and password are required' },
+                { error: 'Username and password are required' },
                 { status: 400 }
             );
         }
@@ -26,8 +27,16 @@ export async function POST(request: NextRequest) {
         const db = getDatabase();
         console.log('Database connected');
 
+        // Create admin_users table if it doesn't exist
+        db.exec(`CREATE TABLE IF NOT EXISTS admin_users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
         // Check if username already exists
-        const existingUser = db.prepare('SELECT id FROM admins WHERE username = ?').get(username);
+        const existingUser = db.prepare('SELECT id FROM admin_users WHERE username = ?').get(username);
         if (existingUser) {
             console.log('Username already exists:', username);
             return NextResponse.json(
@@ -36,22 +45,12 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Check if email already exists
-        const existingEmail = db.prepare('SELECT id FROM admins WHERE email = ?').get(email);
-        if (existingEmail) {
-            console.log('Email already exists:', email);
-            return NextResponse.json(
-                { error: 'Email already exists' },
-                { status: 400 }
-            );
-        }
-
-        // For simplicity, storing password in plain text
-        // In production, you should hash passwords using bcrypt
-        console.log('Creating new admin:', { username, email });
+        // Hash password with bcrypt before storing
+        const hashedPassword = await bcrypt.hash(password, 10);
+        console.log('Creating new admin:', { username });
         db.prepare(
-            'INSERT INTO admins (username, email, password) VALUES (?, ?, ?)'
-        ).run(username, email, password);
+            'INSERT INTO admin_users (username, password) VALUES (?, ?)'
+        ).run(username, hashedPassword);
 
         console.log('Admin created successfully');
         return NextResponse.json(
