@@ -62,3 +62,7 @@ next-env.d.ts
 .qoder
 .vscode
 .next/cache
+tour_guide.db
+tour_guide.db-shm
+tour_guide.db-wal
+.env.local
