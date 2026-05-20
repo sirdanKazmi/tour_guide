@@ -1,11 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Database from 'better-sqlite3';
-import { join } from 'path';
-
-function getDatabase() {
-    const dbPath = join(process.cwd(), 'tour_guide.db');
-    return new Database(dbPath);
-}
+import { supabase } from '@/lib/supabaseClient';
 
 // POST subscribe to newsletter
 export async function POST(request: NextRequest) {
@@ -28,29 +22,27 @@ export async function POST(request: NextRequest) {
             }, { status: 400 });
         }
 
-        const db = getDatabase();
-
-        // Create table if it doesn't exist
-        db.exec(`
-            CREATE TABLE IF NOT EXISTS newsletter_subscribers (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                email TEXT NOT NULL UNIQUE,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
-
         // Check if email already exists
-        const existing = db.prepare('SELECT id FROM newsletter_subscribers WHERE email = ?').get(email);
+        const { data: existing, error: checkError } = await supabase
+            .from('newsletter_subscribers')
+            .select('id')
+            .eq('email', email)
+            .maybeSingle();
+
+        if (checkError) throw checkError;
+
         if (existing) {
-            db.close();
             return NextResponse.json({ 
                 error: 'This email is already subscribed' 
             }, { status: 409 });
         }
 
         // Insert new subscriber
-        db.prepare('INSERT INTO newsletter_subscribers (email) VALUES (?)').run(email);
-        db.close();
+        const { error: insertError } = await supabase
+            .from('newsletter_subscribers')
+            .insert([{ email }]);
+
+        if (insertError) throw insertError;
 
         return NextResponse.json({ 
             success: true, 
@@ -69,11 +61,14 @@ export async function GET(request: NextRequest) {
     try {
         // TODO: Add admin authentication check
         
-        const db = getDatabase();
-        const subscribers = db.prepare('SELECT * FROM newsletter_subscribers ORDER BY created_at DESC').all();
-        db.close();
+        const { data: subscribers, error } = await supabase
+            .from('newsletter_subscribers')
+            .select('*')
+            .order('created_at', { ascending: false });
 
-        return NextResponse.json(subscribers);
+        if (error) throw error;
+
+        return NextResponse.json(subscribers || []);
     } catch (error: any) {
         console.error('Error fetching subscribers:', error);
         return NextResponse.json({ 

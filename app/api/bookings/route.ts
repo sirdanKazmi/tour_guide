@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Create booking with default values
-        const id = createBooking({
+        const id = await createBooking({
             customer_name,
             customer_email,
             customer_phone,

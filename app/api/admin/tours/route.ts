@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
         const category = searchParams.get('category') || undefined;
         const destination = searchParams.get('destination') || undefined;
 
-        const tours = getAllTours({ status, category, destination });
+        const tours = await getAllTours({ status, category, destination });
         return NextResponse.json(tours);
     } catch (error) {
         console.error('Error fetching tours:', error);
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        const id = createTour({
+        const id = await createTour({
             tour_name,
             destination,
             category,
@@ -103,7 +103,7 @@ export async function PUT(request: NextRequest) {
         }
 
         const body = await request.json();
-        updateTour(parseInt(id), body);
+        await updateTour(parseInt(id), body);
 
         return NextResponse.json({ success: true });
     } catch (error) {
@@ -126,7 +126,7 @@ export async function DELETE(request: NextRequest) {
             return NextResponse.json({ error: 'Tour ID is required' }, { status: 400 });
         }
 
-        deleteTour(parseInt(id));
+        await deleteTour(parseInt(id));
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error('Error deleting tour:', error);

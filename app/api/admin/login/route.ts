@@ -94,35 +94,3 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
     return NextResponse.json({ message: 'Method not allowed' }, { status: 405 });
 }
-            return NextResponse.json(
-                { error: 'Invalid credentials' },
-                { status: 401 }
-            );
-        }
-
-        console.log('Login successful for user:', username);
-        const token = generateToken(username);
-
-        const response = NextResponse.json(
-            { success: true, message: 'Login successful' },
-            { status: 200 }
-        );
-
-        // Set HTTP-only cookie
-        response.cookies.set('admin_token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 86400, // 24 hours
-            path: '/',
-        });
-
-        return response;
-    } catch (error) {
-        console.error('Login error:', error);
-        return NextResponse.json(
-            { error: 'Internal server error' },
-            { status: 500 }
-        );
-    }
-}

@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
         const dateTo = searchParams.get('dateTo') || undefined;
         const search = searchParams.get('search') || undefined;
 
-        const bookings = getAllBookings({ status, dateFrom, dateTo, search });
+        const bookings = await getAllBookings({ status, dateFrom, dateTo, search });
         return NextResponse.json(bookings);
     } catch (error) {
         console.error('Error fetching bookings:', error);
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        const id = createBooking({
+        const id = await createBooking({
             customer_name,
             customer_email,
             customer_phone,
@@ -104,7 +104,7 @@ export async function PUT(request: NextRequest) {
         }
 
         const body = await request.json();
-        updateBooking(parseInt(id), body);
+        await updateBooking(parseInt(id), body);
 
         return NextResponse.json({ success: true });
     } catch (error) {
@@ -127,7 +127,7 @@ export async function DELETE(request: NextRequest) {
             return NextResponse.json({ error: 'Booking ID is required' }, { status: 400 });
         }
 
-        deleteBooking(parseInt(id));
+        await deleteBooking(parseInt(id));
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error('Error deleting booking:', error);

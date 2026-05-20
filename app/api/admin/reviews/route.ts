@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url);
         const status = searchParams.get('status') || undefined;
 
-        const reviews = getAllReviews(status);
+        const reviews = await getAllReviews(status);
         return NextResponse.json(reviews);
     } catch (error) {
         console.error('Error fetching reviews:', error);
@@ -57,7 +57,7 @@ export async function PUT(request: NextRequest) {
                 return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
             }
 
-            updateReviewStatus(reviewId, status);
+            await updateReviewStatus(reviewId, status);
             return NextResponse.json({ success: true, message: 'Review status updated' });
         }
 
@@ -65,7 +65,7 @@ export async function PUT(request: NextRequest) {
             const body = await request.json();
             const { is_featured } = body;
 
-            toggleFeaturedReview(reviewId, is_featured);
+            await toggleFeaturedReview(reviewId, is_featured);
             return NextResponse.json({ success: true, message: 'Featured status updated' });
         }
 
@@ -90,7 +90,7 @@ export async function DELETE(request: NextRequest) {
             return NextResponse.json({ error: 'Review ID is required' }, { status: 400 });
         }
 
-        deleteReview(parseInt(id));
+        await deleteReview(parseInt(id));
         return NextResponse.json({ success: true, message: 'Review deleted' });
     } catch (error) {
         console.error('Error deleting review:', error);

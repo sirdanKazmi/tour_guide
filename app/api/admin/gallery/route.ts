@@ -18,7 +18,7 @@ function verifyAdmin(request: NextRequest): boolean {
 // GET all gallery items
 export async function GET() {
     try {
-        const items = getAllGalleryItems();
+        const items = await getAllGalleryItems();
         return NextResponse.json(items);
     } catch (error) {
         console.error('Error fetching gallery items:', error);
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
             thumbnail_url,
         };
 
-        const id = createGalleryItem(itemData);
+        const id = await createGalleryItem(itemData);
         return NextResponse.json({ success: true, id }, { status: 201 });
     } catch (error) {
         console.error('Error creating gallery item:', error);
@@ -83,7 +83,7 @@ export async function PUT(request: NextRequest) {
             );
         }
 
-        updateGalleryItem(id, updates);
+        await updateGalleryItem(id, updates);
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error('Error updating gallery item:', error);
@@ -111,7 +111,7 @@ export async function DELETE(request: NextRequest) {
             );
         }
 
-        deleteGalleryItem(parseInt(id));
+        await deleteGalleryItem(parseInt(id));
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error('Error deleting gallery item:', error);

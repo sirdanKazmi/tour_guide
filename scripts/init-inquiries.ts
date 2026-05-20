@@ -1,10 +1,38 @@
-import Database from 'better-sqlite3';
+import { createClient } from '@supabase/supabase-js';
+import { readFileSync } from 'fs';
 import { join } from 'path';
 
-const dbPath = join(process.cwd(), 'tour_guide.db');
-const db = new Database(dbPath);
+// Helper to load env variables manually from .env file
+function loadEnv() {
+  try {
+    const envPath = join(process.cwd(), '.env');
+    const envContent = readFileSync(envPath, 'utf8');
+    envContent.split('\n').forEach(line => {
+      const parts = line.split('=');
+      if (parts.length >= 2) {
+        const key = parts[0].trim();
+        const value = parts.slice(1).join('=').trim().replace(/^"(.*)"$/, '$1').replace(/^'(.*)'$/, '$1');
+        if (key && !key.startsWith('#')) {
+          process.env[key] = value;
+        }
+      }
+    });
+  } catch (error) {
+    console.warn('Warning: Could not read .env file', error);
+  }
+}
 
-console.log('Adding sample inquiries...');
+loadEnv();
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('❌ Error: Supabase credentials not found in environment or .env file');
+  process.exit(1);
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const sampleInquiries = [
   {
@@ -25,7 +53,7 @@ const sampleInquiries = [
     name: 'Muhammad Usman',
     email: 'usman.m@email.com',
     phone: '+92 333 4567890',
-    message: 'I booked the Naran Kaghan tour last week but haven\'t received confirmation yet. My booking reference is #12345. Please update me on the status.',
+    message: "I booked the Naran Kaghan tour last week but haven't received confirmation yet. My booking reference is #12345. Please update me on the status.",
     status: 'read',
   },
   {
@@ -37,24 +65,26 @@ const sampleInquiries = [
   },
 ];
 
-try {
-  const stmt = db.prepare(`
-    INSERT INTO inquiries (name, email, phone, message, status)
-    VALUES (@name, @email, @phone, @message, @status)
-  `);
+async function initInquiries() {
+  console.log('Adding sample inquiries to Supabase...');
 
-  const insert = db.transaction((inquiries) => {
-    for (const inquiry of inquiries) {
-      stmt.run(inquiry);
+  try {
+    const { error } = await supabase
+      .from('inquiries')
+      .insert(sampleInquiries);
+
+    if (error) {
+      throw error;
+    }
+
+    for (const inquiry of sampleInquiries) {
       console.log(`✅ Added inquiry from: ${inquiry.name} (${inquiry.status})`);
     }
-  });
 
-  insert(sampleInquiries);
-
-  console.log(`\n✅ ${sampleInquiries.length} sample inquiries added successfully!`);
-} catch (error) {
-  console.error('❌ Error adding sample inquiries:', error);
-} finally {
-  db.close();
+    console.log(`\n✅ ${sampleInquiries.length} sample inquiries added successfully to Supabase!`);
+  } catch (error) {
+    console.error('❌ Error adding sample inquiries:', error);
+  }
 }
+
+initInquiries();

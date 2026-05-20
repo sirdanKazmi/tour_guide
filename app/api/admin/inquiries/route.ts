@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url);
         const status = searchParams.get('status') || undefined;
 
-        const inquiries = getAllInquiries(status);
+        const inquiries = await getAllInquiries(status);
         return NextResponse.json(inquiries);
     } catch (error) {
         console.error('Error fetching inquiries:', error);
@@ -52,7 +52,7 @@ export async function PUT(request: NextRequest) {
             return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
         }
 
-        updateInquiryStatus(parseInt(id), status);
+        await updateInquiryStatus(parseInt(id), status);
         return NextResponse.json({ success: true, message: 'Inquiry status updated' });
     } catch (error) {
         console.error('Error updating inquiry:', error);
@@ -74,7 +74,7 @@ export async function DELETE(request: NextRequest) {
             return NextResponse.json({ error: 'Inquiry ID is required' }, { status: 400 });
         }
 
-        deleteInquiry(parseInt(id));
+        await deleteInquiry(parseInt(id));
         return NextResponse.json({ success: true, message: 'Inquiry deleted' });
     } catch (error) {
         console.error('Error deleting inquiry:', error);

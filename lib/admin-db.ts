@@ -352,6 +352,7 @@ export interface Inquiry {
   name: string;
   email: string;
   phone?: string;
+  trip_dates?: string;
   message: string;
   status: 'new' | 'read' | 'replied';
   replied_at?: string;
@@ -507,7 +508,7 @@ export async function getRevenueSummary(): Promise<{
     .select('total_price')
     .eq('booking_status', 'completed');
 
-  const sum = (arr: any[]) => (arr || []).reduce((s, r) => s + (r.total_price || 0), 0);
+  const sum = (arr: any[] | null) => (arr || []).reduce((s, r) => s + (r.total_price || 0), 0);
 
   return {
     today: sum(todayResult.data),

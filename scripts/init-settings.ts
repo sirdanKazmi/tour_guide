@@ -1,41 +1,74 @@
-import Database from 'better-sqlite3';
+import { createClient } from '@supabase/supabase-js';
+import { readFileSync } from 'fs';
 import { join } from 'path';
 
-const dbPath = join(process.cwd(), 'tour_guide.db');
-const db = new Database(dbPath);
+// Helper to load env variables manually from .env file
+function loadEnv() {
+  try {
+    const envPath = join(process.cwd(), '.env');
+    const envContent = readFileSync(envPath, 'utf8');
+    envContent.split('\n').forEach(line => {
+      const parts = line.split('=');
+      if (parts.length >= 2) {
+        const key = parts[0].trim();
+        const value = parts.slice(1).join('=').trim().replace(/^"(.*)"$/, '$1').replace(/^'(.*)'$/, '$1');
+        if (key && !key.startsWith('#')) {
+          process.env[key] = value;
+        }
+      }
+    });
+  } catch (error) {
+    console.warn('Warning: Could not read .env file', error);
+  }
+}
 
-console.log('Initializing default settings...');
+loadEnv();
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('❌ Error: Supabase credentials not found in environment or .env file');
+  process.exit(1);
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const defaultSettings = [
-  { key: 'business_name', value: 'Smile For Miles' },
-  { key: 'business_email', value: 'baltrotraders1234@gmail.com' },
-  { key: 'business_phone', value: '' },
-  { key: 'business_whatsapp', value: '' },
-  { key: 'business_address', value: '' },
-  { key: 'facebook_url', value: '' },
-  { key: 'instagram_url', value: '' },
-  { key: 'tiktok_url', value: '' },
-  { key: 'youtube_url', value: '' },
-  { key: 'homepage_banner_text', value: '' },
-  { key: 'meta_title', value: '' },
-  { key: 'meta_description', value: '' },
+  { setting_key: 'business_name', setting_value: 'Smile For Miles' },
+  { setting_key: 'business_email', setting_value: 'baltrotraders1234@gmail.com' },
+  { setting_key: 'business_phone', setting_value: '' },
+  { setting_key: 'business_whatsapp', setting_value: '' },
+  { setting_key: 'business_address', setting_value: '' },
+  { setting_key: 'facebook_url', setting_value: '' },
+  { setting_key: 'instagram_url', setting_value: '' },
+  { setting_key: 'tiktok_url', setting_value: '' },
+  { setting_key: 'youtube_url', setting_value: '' },
+  { setting_key: 'homepage_banner_text', setting_value: '' },
+  { setting_key: 'meta_title', setting_value: '' },
+  { setting_key: 'meta_description', setting_value: '' },
 ];
 
-try {
-  const stmt = db.prepare(`
-    INSERT INTO settings (setting_key, setting_value) 
-    VALUES (?, ?) 
-    ON CONFLICT(setting_key) DO NOTHING
-  `);
+async function initSettings() {
+  console.log('Initializing default settings in Supabase...');
 
-  for (const setting of defaultSettings) {
-    stmt.run(setting.key, setting.value);
-    console.log(`✅ ${setting.key}: ${setting.value || '(empty)'}`);
+  try {
+    const { error } = await supabase
+      .from('settings')
+      .upsert(defaultSettings, { onConflict: 'setting_key' });
+
+    if (error) {
+      throw error;
+    }
+
+    for (const setting of defaultSettings) {
+      console.log(`✅ ${setting.setting_key}: ${setting.setting_value || '(empty)'}`);
+    }
+
+    console.log('\n✅ Default settings initialized successfully in Supabase!');
+  } catch (error) {
+    console.error('❌ Error initializing settings:', error);
   }
-
-  console.log('\n✅ Default settings initialized successfully!');
-} catch (error) {
-  console.error('❌ Error initializing settings:', error);
-} finally {
-  db.close();
 }
+
+initSettings();

@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
         const search = searchParams.get('search') || undefined;
 
         console.log('Fetching customers with search:', search);
-        const customers = getAllCustomers(search);
+        const customers = await getAllCustomers(search);
         console.log('Found customers:', customers.length);
         
         return NextResponse.json(customers);
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Customer name is required' }, { status: 400 });
         }
 
-        const id = createCustomer({
+        const id = await createCustomer({
             name,
             email,
             phone,
@@ -83,7 +83,7 @@ export async function PUT(request: NextRequest) {
         }
 
         const body = await request.json();
-        updateCustomer(parseInt(id), body);
+        await updateCustomer(parseInt(id), body);
 
         return NextResponse.json({ success: true });
     } catch (error) {

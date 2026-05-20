@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Database from 'better-sqlite3';
-import { join } from 'path';
+import { supabase } from '@/lib/supabaseClient';
 import nodemailer from 'nodemailer';
-
-function getDatabase() {
-    const dbPath = join(process.cwd(), 'tour_guide.db');
-    return new Database(dbPath);
-}
 
 // POST - Handle contact form submission
 export async function POST(request: NextRequest) {
@@ -29,36 +23,18 @@ export async function POST(request: NextRequest) {
             }, { status: 400 });
         }
 
-        const db = getDatabase();
+        // Save inquiry to Supabase
+        const { error: dbError } = await supabase
+            .from('inquiries')
+            .insert([{
+                name,
+                email,
+                trip_dates: trip_dates || null,
+                message,
+                status: 'new'
+            }]);
 
-        // Create inquiries table if it doesn't exist
-        db.exec(`
-            CREATE TABLE IF NOT EXISTS inquiries (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                email TEXT NOT NULL,
-                phone TEXT,
-                trip_dates TEXT,
-                message TEXT NOT NULL,
-                status TEXT DEFAULT 'new' CHECK(status IN ('new', 'read', 'replied')),
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
-
-        // Add trip_dates column if it doesn't exist (for older databases)
-        try {
-            db.exec(`ALTER TABLE inquiries ADD COLUMN trip_dates TEXT`);
-        } catch (e) {
-            // Column already exists, ignore error
-        }
-
-        // Save inquiry to database
-        db.prepare(`
-            INSERT INTO inquiries (name, email, trip_dates, message, status)
-            VALUES (?, ?, ?, ?, 'new')
-        `).run(name, email, trip_dates || null, message);
-
-        db.close();
+        if (dbError) throw dbError;
 
         // Send email notification to admin
         try {

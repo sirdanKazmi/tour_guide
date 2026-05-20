@@ -23,22 +23,26 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // Get all bookings
-        const allBookings = getAllBookings();
-        const pendingBookings = getPendingBookings();
-        const recentBookings = getRecentBookings(5);
+        // Fetch dashboard data in parallel
+        const [
+            allBookings,
+            pendingBookings,
+            recentBookings,
+            revenue,
+            activeTours,
+            customers,
+            inquiries
+        ] = await Promise.all([
+            getAllBookings(),
+            getPendingBookings(),
+            getRecentBookings(5),
+            getRevenueSummary(),
+            getAllTours({ status: 'active' }),
+            getAllCustomers(),
+            getAllInquiries()
+        ]);
 
-        // Get revenue summary
-        const revenue = getRevenueSummary();
-
-        // Get active tours count
-        const activeTours = getAllTours({ status: 'active' });
-
-        // Get all customers
-        const customers = getAllCustomers();
-
-        // Get recent inquiries
-        const recentInquiries = getAllInquiries().slice(0, 5);
+        const recentInquiries = inquiries.slice(0, 5);
 
         // Calculate booking stats
         const today = new Date().toISOString().split('T')[0];

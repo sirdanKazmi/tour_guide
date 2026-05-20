@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const staff = getAllStaff();
+        const staff = await getAllStaff();
         // Remove password from response
         const safeStaff = staff.map(({ password, ...rest }) => rest);
         return NextResponse.json(safeStaff);
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
         // Hash password
         const hashedPassword = await bcrypt.hash(password || '123456', 10);
 
-        const id = createStaff({
+        const id = await createStaff({
             name,
             role,
             email,
@@ -86,7 +86,7 @@ export async function PUT(request: NextRequest) {
             body.password = await bcrypt.hash(body.password, 10);
         }
 
-        updateStaff(parseInt(id), body);
+        await updateStaff(parseInt(id), body);
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error('Error updating team member:', error);
@@ -108,7 +108,7 @@ export async function DELETE(request: NextRequest) {
             return NextResponse.json({ error: 'Team member ID is required' }, { status: 400 });
         }
 
-        deleteStaff(parseInt(id));
+        await deleteStaff(parseInt(id));
         return NextResponse.json({ success: true, message: 'Team member deleted' });
     } catch (error) {
         console.error('Error deleting team member:', error);

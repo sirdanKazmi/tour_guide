@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const settings = getAllSettings();
+        const settings = await getAllSettings();
         return NextResponse.json(settings);
     } catch (error) {
         console.error('Error fetching settings:', error);
@@ -41,7 +41,7 @@ export async function PUT(request: NextRequest) {
         // Update each setting in the database
         for (const [key, value] of Object.entries(body)) {
             if (value !== undefined && value !== null) {
-                setSetting(key, String(value));
+                await setSetting(key, String(value));
             }
         }
 

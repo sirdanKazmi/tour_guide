@@ -56,10 +56,3 @@ export async function POST(request: NextRequest) {
         );
     }
 }
-        console.error('Error creating admin account:', error);
-        return NextResponse.json(
-            { error: 'Failed to create account: ' + (error as Error).message },
-            { status: 500 }
-        );
-    }
-}
