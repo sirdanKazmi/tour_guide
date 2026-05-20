@@ -1,4 +1,45 @@
-import { getDatabase } from './db';
+import { supabase } from './supabaseClient';
+import bcrypt from 'bcryptjs';
+
+// ============================================
+// ADMIN AUTH FUNCTIONS
+// ============================================
+
+export interface AdminUser {
+  id?: number;
+  username: string;
+  password?: string;
+  created_at?: string;
+}
+
+export async function getAdminByUsername(username: string): Promise<AdminUser | undefined> {
+  const { data, error } = await supabase
+    .from('admin_users')
+    .select('*')
+    .eq('username', username)
+    .single();
+
+  if (error && error.code !== 'PGRST116') throw error;
+  return data as AdminUser | undefined;
+}
+
+export async function createAdmin(username: string, password: string): Promise<number> {
+  const hashedPassword = await bcrypt.hash(password, 10);
+  
+  const { data, error } = await supabase
+    .from('admin_users')
+    .insert([{ username, password: hashedPassword }])
+    .select('id')
+    .single();
+
+  if (error) throw error;
+  return data?.id || 0;
+}
+
+export async function verifyAdminPassword(admin: AdminUser, password: string): Promise<boolean> {
+  if (!admin.password) return false;
+  return bcrypt.compare(password, admin.password);
+}
 
 // ============================================
 // BOOKING FUNCTIONS
@@ -24,90 +65,96 @@ export interface Booking {
   updated_at?: string;
 }
 
-export function getAllBookings(filters?: {
+export async function getAllBookings(filters?: {
   status?: string;
   dateFrom?: string;
   dateTo?: string;
   search?: string;
-}): Booking[] {
-  const db = getDatabase();
-  let query = 'SELECT * FROM bookings WHERE 1=1';
-  const params: any[] = [];
+}): Promise<Booking[]> {
+  let query = supabase.from('bookings').select('*');
 
   if (filters?.status) {
-    query += ' AND booking_status = ?';
-    params.push(filters.status);
+    query = query.eq('booking_status', filters.status);
   }
 
   if (filters?.dateFrom) {
-    query += ' AND travel_date >= ?';
-    params.push(filters.dateFrom);
+    query = query.gte('travel_date', filters.dateFrom);
   }
 
   if (filters?.dateTo) {
-    query += ' AND travel_date <= ?';
-    params.push(filters.dateTo);
+    query = query.lte('travel_date', filters.dateTo);
   }
 
   if (filters?.search) {
-    query += ' AND (customer_name LIKE ? OR id LIKE ?)';
-    params.push(`%${filters.search}%`, `%${filters.search}%`);
+    query = query.or(`customer_name.ilike.%${filters.search}%,id.ilike.%${filters.search}%`);
   }
 
-  query += ' ORDER BY created_at DESC';
-  const stmt = db.prepare(query);
-  return stmt.all(...params) as Booking[];
+  const { data, error } = await query.order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return (data || []) as Booking[];
 }
 
-export function getBookingById(id: number): Booking | undefined {
-  const db = getDatabase();
-  const stmt = db.prepare('SELECT * FROM bookings WHERE id = ?');
-  return stmt.get(id) as Booking | undefined;
+export async function getBookingById(id: number): Promise<Booking | undefined> {
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error && error.code !== 'PGRST116') throw error;
+  return data as Booking | undefined;
 }
 
-export function createBooking(booking: Omit<Booking, 'id' | 'created_at' | 'updated_at'>): number {
-  const db = getDatabase();
-  const stmt = db.prepare(`
-    INSERT INTO bookings (customer_name, customer_email, customer_phone, customer_cnic, 
-      tour_name, tour_id, travel_date, people_count, price_per_person, total_price, 
-      payment_status, booking_status, special_requests, admin_notes)
-    VALUES (@customer_name, @customer_email, @customer_phone, @customer_cnic, 
-      @tour_name, @tour_id, @travel_date, @people_count, @price_per_person, @total_price, 
-      @payment_status, @booking_status, @special_requests, @admin_notes)
-  `);
-  const result = stmt.run(booking);
-  return result.lastInsertRowid as number;
+export async function createBooking(booking: Omit<Booking, 'id' | 'created_at' | 'updated_at'>): Promise<number> {
+  const { data, error } = await supabase
+    .from('bookings')
+    .insert([booking])
+    .select('id')
+    .single();
+
+  if (error) throw error;
+  return data?.id || 0;
 }
 
-export function updateBooking(id: number, booking: Partial<Booking>): void {
-  const db = getDatabase();
-  const fields = Object.keys(booking).filter(k => k !== 'id');
-  const setClause = fields.map(f => `${f} = @${f}`).join(', ');
-  
-  const stmt = db.prepare(`
-    UPDATE bookings 
-    SET ${setClause}, updated_at = CURRENT_TIMESTAMP
-    WHERE id = @id
-  `);
-  stmt.run({ ...booking, id });
+export async function updateBooking(id: number, booking: Partial<Booking>): Promise<void> {
+  const { error } = await supabase
+    .from('bookings')
+    .update(booking)
+    .eq('id', id);
+
+  if (error) throw error;
 }
 
-export function deleteBooking(id: number): void {
-  const db = getDatabase();
-  const stmt = db.prepare('DELETE FROM bookings WHERE id = ?');
-  stmt.run(id);
+export async function deleteBooking(id: number): Promise<void> {
+  const { error } = await supabase
+    .from('bookings')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
 }
 
-export function getRecentBookings(limit: number = 5): Booking[] {
-  const db = getDatabase();
-  const stmt = db.prepare('SELECT * FROM bookings ORDER BY created_at DESC LIMIT ?');
-  return stmt.all(limit) as Booking[];
+export async function getRecentBookings(limit: number = 5): Promise<Booking[]> {
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return (data || []) as Booking[];
 }
 
-export function getPendingBookings(): Booking[] {
-  const db = getDatabase();
-  const stmt = db.prepare('SELECT * FROM bookings WHERE booking_status = ? ORDER BY created_at DESC');
-  return stmt.all('pending') as Booking[];
+export async function getPendingBookings(): Promise<Booking[]> {
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('*')
+    .eq('booking_status', 'pending')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return (data || []) as Booking[];
 }
 
 // ============================================
@@ -134,78 +181,80 @@ export interface Tour {
   updated_at?: string;
 }
 
-export function getAllTours(filters?: {
+export async function getAllTours(filters?: {
   status?: string;
   category?: string;
   destination?: string;
-}): Tour[] {
-  const db = getDatabase();
-  let query = 'SELECT * FROM tours WHERE 1=1';
-  const params: any[] = [];
+}): Promise<Tour[]> {
+  let query = supabase.from('tours').select('*');
 
   if (filters?.status) {
-    query += ' AND status = ?';
-    params.push(filters.status);
+    query = query.eq('status', filters.status);
   }
 
   if (filters?.category) {
-    query += ' AND category = ?';
-    params.push(filters.category);
+    query = query.eq('category', filters.category);
   }
 
   if (filters?.destination) {
-    query += ' AND destination = ?';
-    params.push(filters.destination);
+    query = query.eq('destination', filters.destination);
   }
 
-  query += ' ORDER BY created_at DESC';
-  const stmt = db.prepare(query);
-  return stmt.all(...params) as Tour[];
+  const { data, error } = await query.order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return (data || []) as Tour[];
 }
 
-export function getTourById(id: number): Tour | undefined {
-  const db = getDatabase();
-  const stmt = db.prepare('SELECT * FROM tours WHERE id = ?');
-  return stmt.get(id) as Tour | undefined;
+export async function getTourById(id: number): Promise<Tour | undefined> {
+  const { data, error } = await supabase
+    .from('tours')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error && error.code !== 'PGRST116') throw error;
+  return data as Tour | undefined;
 }
 
-export function createTour(tour: Omit<Tour, 'id' | 'created_at' | 'updated_at'>): number {
-  const db = getDatabase();
-  const stmt = db.prepare(`
-    INSERT INTO tours (tour_name, destination, category, description, duration, 
-      price_per_person, max_seats, available_seats, departure_city, inclusions, 
-      exclusions, itinerary, cover_image, status)
-    VALUES (@tour_name, @destination, @category, @description, @duration, 
-      @price_per_person, @max_seats, @available_seats, @departure_city, @inclusions, 
-      @exclusions, @itinerary, @cover_image, @status)
-  `);
-  const result = stmt.run(tour);
-  return result.lastInsertRowid as number;
+export async function createTour(tour: Omit<Tour, 'id' | 'created_at' | 'updated_at'>): Promise<number> {
+  const { data, error } = await supabase
+    .from('tours')
+    .insert([tour])
+    .select('id')
+    .single();
+
+  if (error) throw error;
+  return data?.id || 0;
 }
 
-export function updateTour(id: number, tour: Partial<Tour>): void {
-  const db = getDatabase();
-  const fields = Object.keys(tour).filter(k => k !== 'id');
-  const setClause = fields.map(f => `${f} = @${f}`).join(', ');
-  
-  const stmt = db.prepare(`
-    UPDATE tours 
-    SET ${setClause}, updated_at = CURRENT_TIMESTAMP
-    WHERE id = @id
-  `);
-  stmt.run({ ...tour, id });
+export async function updateTour(id: number, tour: Partial<Tour>): Promise<void> {
+  const { error } = await supabase
+    .from('tours')
+    .update(tour)
+    .eq('id', id);
+
+  if (error) throw error;
 }
 
-export function deleteTour(id: number): void {
-  const db = getDatabase();
-  const stmt = db.prepare('DELETE FROM tours WHERE id = ?');
-  stmt.run(id);
+export async function deleteTour(id: number): Promise<void> {
+  const { error } = await supabase
+    .from('tours')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
 }
 
-export function getActiveTours(): Tour[] {
-  const db = getDatabase();
-  const stmt = db.prepare('SELECT * FROM tours WHERE status = ? ORDER BY tour_name');
-  return stmt.all('active') as Tour[];
+export async function getActiveTours(): Promise<Tour[]> {
+  const { data, error } = await supabase
+    .from('tours')
+    .select('*')
+    .eq('status', 'active')
+    .order('tour_name', { ascending: true });
+
+  if (error) throw error;
+  return (data || []) as Tour[];
 }
 
 // ============================================
@@ -227,75 +276,71 @@ export interface Customer {
   updated_at?: string;
 }
 
-export function getAllCustomers(search?: string): Customer[] {
-  const db = getDatabase();
-  
-  // Query to get unique customers from bookings table with aggregated stats
-  let query = `
-    SELECT 
-      customer_name as name,
-      customer_email as email,
-      customer_phone as phone,
-      COUNT(*) as total_bookings,
-      COALESCE(SUM(total_price), 0) as total_spent,
-      MIN(created_at) as created_at
-    FROM bookings
-    WHERE 1=1
-  `;
-  const params: any[] = [];
+export async function getAllCustomers(search?: string): Promise<Customer[]> {
+  let query = supabase
+    .from('bookings')
+    .select('customer_name, customer_email, customer_phone, total_price, created_at, COUNT(*) as total_bookings', {
+      count: 'exact',
+    });
 
   if (search) {
-    query += ' AND (customer_name LIKE ? OR customer_email LIKE ? OR customer_phone LIKE ?)';
-    params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    query = query.or(`customer_name.ilike.%${search}%,customer_email.ilike.%${search}%,customer_phone.ilike.%${search}%`);
   }
 
-  query += `
-    GROUP BY customer_email, customer_name, customer_phone
-    ORDER BY created_at DESC
-  `;
-  
-  const stmt = db.prepare(query);
-  const results = stmt.all(...params) as any[];
-  
-  // Convert to Customer interface format
-  return results.map((row, index) => ({
-    id: index + 1, // Temporary ID for display
-    name: row.name,
-    email: row.email || '',
-    phone: row.phone || '',
-    total_bookings: row.total_bookings,
-    total_spent: row.total_spent,
-    created_at: row.created_at,
-  })) as Customer[];
+  const { data, error } = await query.order('created_at', { ascending: false });
+
+  if (error) throw error;
+
+  // Group and aggregate data
+  const customerMap = new Map<string, Customer>();
+  (data || []).forEach((row: any) => {
+    if (!customerMap.has(row.customer_email)) {
+      customerMap.set(row.customer_email, {
+        name: row.customer_name,
+        email: row.customer_email,
+        phone: row.customer_phone,
+        total_bookings: 0,
+        total_spent: 0,
+        created_at: row.created_at,
+      });
+    }
+    const customer = customerMap.get(row.customer_email)!;
+    customer.total_bookings += 1;
+    customer.total_spent += row.total_price || 0;
+  });
+
+  return Array.from(customerMap.values());
 }
 
-export function getCustomerById(id: number): Customer | undefined {
-  const db = getDatabase();
-  const stmt = db.prepare('SELECT * FROM customers WHERE id = ?');
-  return stmt.get(id) as Customer | undefined;
+export async function getCustomerById(id: number): Promise<Customer | undefined> {
+  const { data, error } = await supabase
+    .from('customers')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error && error.code !== 'PGRST116') throw error;
+  return data as Customer | undefined;
 }
 
-export function createCustomer(customer: Omit<Customer, 'id' | 'created_at' | 'updated_at'>): number {
-  const db = getDatabase();
-  const stmt = db.prepare(`
-    INSERT INTO customers (name, email, phone, city, cnic, total_bookings, total_spent, admin_notes)
-    VALUES (@name, @email, @phone, @city, @cnic, @total_bookings, @total_spent, @admin_notes)
-  `);
-  const result = stmt.run(customer);
-  return result.lastInsertRowid as number;
+export async function createCustomer(customer: Omit<Customer, 'id' | 'created_at' | 'updated_at'>): Promise<number> {
+  const { data, error } = await supabase
+    .from('customers')
+    .insert([customer])
+    .select('id')
+    .single();
+
+  if (error) throw error;
+  return data?.id || 0;
 }
 
-export function updateCustomer(id: number, customer: Partial<Customer>): void {
-  const db = getDatabase();
-  const fields = Object.keys(customer).filter(k => k !== 'id');
-  const setClause = fields.map(f => `${f} = @${f}`).join(', ');
-  
-  const stmt = db.prepare(`
-    UPDATE customers 
-    SET ${setClause}, updated_at = CURRENT_TIMESTAMP
-    WHERE id = @id
-  `);
-  stmt.run({ ...customer, id });
+export async function updateCustomer(id: number, customer: Partial<Customer>): Promise<void> {
+  const { error } = await supabase
+    .from('customers')
+    .update(customer)
+    .eq('id', id);
+
+  if (error) throw error;
 }
 
 // ============================================
@@ -313,51 +358,62 @@ export interface Inquiry {
   created_at?: string;
 }
 
-export function getAllInquiries(status?: string): Inquiry[] {
-  const db = getDatabase();
-  let query = 'SELECT * FROM inquiries WHERE 1=1';
-  const params: any[] = [];
+export async function getAllInquiries(status?: string): Promise<Inquiry[]> {
+  let query = supabase.from('inquiries').select('*');
 
   if (status) {
-    query += ' AND status = ?';
-    params.push(status);
+    query = query.eq('status', status);
   }
 
-  query += ' ORDER BY created_at DESC';
-  const stmt = db.prepare(query);
-  return stmt.all(...params) as Inquiry[];
+  const { data, error } = await query.order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return (data || []) as Inquiry[];
 }
 
-export function createInquiry(inquiry: Omit<Inquiry, 'id' | 'created_at'>): number {
-  const db = getDatabase();
-  const stmt = db.prepare(`
-    INSERT INTO inquiries (name, email, phone, message, status)
-    VALUES (@name, @email, @phone, @message, @status)
-  `);
-  const result = stmt.run(inquiry);
-  return result.lastInsertRowid as number;
+export async function createInquiry(inquiry: Omit<Inquiry, 'id' | 'created_at'>): Promise<number> {
+  const { data, error } = await supabase
+    .from('inquiries')
+    .insert([inquiry])
+    .select('id')
+    .single();
+
+  if (error) throw error;
+  return data?.id || 0;
 }
 
-export function updateInquiryStatus(id: number, status: 'new' | 'read' | 'replied'): void {
-  const db = getDatabase();
-  const stmt = db.prepare(`
-    UPDATE inquiries 
-    SET status = ?, replied_at = CASE WHEN ? = 'replied' THEN CURRENT_TIMESTAMP ELSE replied_at END
-    WHERE id = ?
-  `);
-  stmt.run(status, status, id);
+export async function updateInquiryStatus(id: number, status: 'new' | 'read' | 'replied'): Promise<void> {
+  const update: any = { status };
+  if (status === 'replied') {
+    update.replied_at = new Date().toISOString();
+  }
+
+  const { error } = await supabase
+    .from('inquiries')
+    .update(update)
+    .eq('id', id);
+
+  if (error) throw error;
 }
 
-export function deleteInquiry(id: number): void {
-  const db = getDatabase();
-  const stmt = db.prepare('DELETE FROM inquiries WHERE id = ?');
-  stmt.run(id);
+export async function deleteInquiry(id: number): Promise<void> {
+  const { error } = await supabase
+    .from('inquiries')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
 }
 
-export function getUnreadInquiries(): Inquiry[] {
-  const db = getDatabase();
-  const stmt = db.prepare("SELECT * FROM inquiries WHERE status = 'new' ORDER BY created_at DESC");
-  return stmt.all() as Inquiry[];
+export async function getUnreadInquiries(): Promise<Inquiry[]> {
+  const { data, error } = await supabase
+    .from('inquiries')
+    .select('*')
+    .eq('status', 'new')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return (data || []) as Inquiry[];
 }
 
 // ============================================
@@ -377,99 +433,95 @@ export interface Payment {
   created_at?: string;
 }
 
-export function getAllPayments(filters?: {
+export async function getAllPayments(filters?: {
   method?: string;
   status?: string;
-}): Payment[] {
-  const db = getDatabase();
-  let query = 'SELECT * FROM payments WHERE 1=1';
-  const params: any[] = [];
+}): Promise<Payment[]> {
+  let query = supabase.from('payments').select('*');
 
   if (filters?.method) {
-    query += ' AND payment_method = ?';
-    params.push(filters.method);
+    query = query.eq('payment_method', filters.method);
   }
 
   if (filters?.status) {
-    query += ' AND status = ?';
-    params.push(filters.status);
+    query = query.eq('status', filters.status);
   }
 
-  query += ' ORDER BY created_at DESC';
-  const stmt = db.prepare(query);
-  return stmt.all(...params) as Payment[];
+  const { data, error } = await query.order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return (data || []) as Payment[];
 }
 
-export function createPayment(payment: Omit<Payment, 'id' | 'created_at'>): number {
-  const db = getDatabase();
-  const stmt = db.prepare(`
-    INSERT INTO payments (booking_id, customer_name, amount, payment_method, status, transaction_id, notes)
-    VALUES (@booking_id, @customer_name, @amount, @payment_method, @status, @transaction_id, @notes)
-  `);
-  const result = stmt.run(payment);
-  return result.lastInsertRowid as number;
+export async function createPayment(payment: Omit<Payment, 'id' | 'created_at'>): Promise<number> {
+  const { data, error } = await supabase
+    .from('payments')
+    .insert([payment])
+    .select('id')
+    .single();
+
+  if (error) throw error;
+  return data?.id || 0;
 }
 
-export function updatePayment(id: number, payment: Partial<Payment>): void {
-  const db = getDatabase();
-  const fields = Object.keys(payment).filter(k => k !== 'id');
-  const setClause = fields.map(f => `${f} = @${f}`).join(', ');
-  
-  const stmt = db.prepare(`
-    UPDATE payments 
-    SET ${setClause}
-    WHERE id = @id
-  `);
-  stmt.run({ ...payment, id });
+export async function updatePayment(id: number, payment: Partial<Payment>): Promise<void> {
+  const { error } = await supabase
+    .from('payments')
+    .update(payment)
+    .eq('id', id);
+
+  if (error) throw error;
 }
 
-export function getRevenueSummary(): {
+export async function getRevenueSummary(): Promise<{
   today: number;
   thisWeek: number;
   thisMonth: number;
   total: number;
-} {
-  const db = getDatabase();
-  
-  const today = db.prepare(
-    "SELECT COALESCE(SUM(total_price), 0) as total FROM bookings WHERE booking_status = 'completed' AND date(created_at) = date('now')"
-  ).get() as { total: number };
+}> {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString().split('T')[0];
+  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-  const thisWeek = db.prepare(
-    "SELECT COALESCE(SUM(total_price), 0) as total FROM bookings WHERE booking_status = 'completed' AND created_at >= date('now', '-7 days')"
-  ).get() as { total: number };
+  const todayResult = await supabase
+    .from('bookings')
+    .select('total_price')
+    .eq('booking_status', 'completed')
+    .gte('created_at', today);
 
-  const thisMonth = db.prepare(
-    "SELECT COALESCE(SUM(total_price), 0) as total FROM bookings WHERE booking_status = 'completed' AND created_at >= date('now', '-30 days')"
-  ).get() as { total: number };
+  const weekResult = await supabase
+    .from('bookings')
+    .select('total_price')
+    .eq('booking_status', 'completed')
+    .gte('created_at', weekAgo);
 
-  const total = db.prepare(
-    "SELECT COALESCE(SUM(total_price), 0) as total FROM bookings WHERE booking_status = 'completed'"
-  ).get() as { total: number };
+  const monthResult = await supabase
+    .from('bookings')
+    .select('total_price')
+    .eq('booking_status', 'completed')
+    .gte('created_at', monthAgo);
+
+  const totalResult = await supabase
+    .from('bookings')
+    .select('total_price')
+    .eq('booking_status', 'completed');
+
+  const sum = (arr: any[]) => (arr || []).reduce((s, r) => s + (r.total_price || 0), 0);
 
   return {
-    today: today.total,
-    thisWeek: thisWeek.total,
-    thisMonth: thisMonth.total,
-    total: total.total
+    today: sum(todayResult.data),
+    thisWeek: sum(weekResult.data),
+    thisMonth: sum(monthResult.data),
+    total: sum(totalResult.data),
   };
 }
 
-export function getDailyRevenue(days: number = 30): { date: string; revenue: number }[] {
-  const db = getDatabase();
-  
-  const query = `
-    SELECT 
-      date(created_at) as date,
-      COALESCE(SUM(total_price), 0) as revenue
-    FROM bookings 
-    WHERE booking_status = 'completed' 
-      AND created_at >= date('now', '-' || ? || ' days')
-    GROUP BY date(created_at)
-    ORDER BY date ASC
-  `;
-  
-  return db.prepare(query).all(days) as { date: string; revenue: number }[];
+export async function getDailyRevenue(days: number = 30): Promise<{ date: string; revenue: number }[]> {
+  const { data, error } = await supabase.rpc('get_daily_revenue', { num_days: days });
+
+  if (error) throw error;
+  return (data || []) as { date: string; revenue: number }[];
 }
 
 // ============================================
@@ -488,61 +540,66 @@ export interface Review {
   updated_at?: string;
 }
 
-export function getAllReviews(status?: string): Review[] {
-  const db = getDatabase();
-  let query = 'SELECT * FROM reviews WHERE 1=1';
-  const params: any[] = [];
+export async function getAllReviews(status?: string): Promise<Review[]> {
+  let query = supabase.from('reviews').select('*');
 
   if (status) {
-    query += ' AND status = ?';
-    params.push(status);
+    query = query.eq('status', status);
   }
 
-  query += ' ORDER BY created_at DESC';
-  const stmt = db.prepare(query);
-  return stmt.all(...params) as Review[];
+  const { data, error } = await query.order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return (data || []) as Review[];
 }
 
-export function createReview(review: Omit<Review, 'id' | 'created_at' | 'updated_at'>): number {
-  const db = getDatabase();
-  const stmt = db.prepare(`
-    INSERT INTO reviews (customer_name, tour_name, rating, review_text, status, is_featured)
-    VALUES (@customer_name, @tour_name, @rating, @review_text, @status, @is_featured)
-  `);
-  const result = stmt.run(review);
-  return result.lastInsertRowid as number;
+export async function createReview(review: Omit<Review, 'id' | 'created_at' | 'updated_at'>): Promise<number> {
+  const { data, error } = await supabase
+    .from('reviews')
+    .insert([review])
+    .select('id')
+    .single();
+
+  if (error) throw error;
+  return data?.id || 0;
 }
 
-export function updateReviewStatus(id: number, status: 'pending' | 'approved' | 'rejected'): void {
-  const db = getDatabase();
-  const stmt = db.prepare(`
-    UPDATE reviews 
-    SET status = ?, updated_at = CURRENT_TIMESTAMP
-    WHERE id = ?
-  `);
-  stmt.run(status, id);
+export async function updateReviewStatus(id: number, status: 'pending' | 'approved' | 'rejected'): Promise<void> {
+  const { error } = await supabase
+    .from('reviews')
+    .update({ status })
+    .eq('id', id);
+
+  if (error) throw error;
 }
 
-export function toggleFeaturedReview(id: number, is_featured: boolean): void {
-  const db = getDatabase();
-  const stmt = db.prepare(`
-    UPDATE reviews 
-    SET is_featured = ?, updated_at = CURRENT_TIMESTAMP
-    WHERE id = ?
-  `);
-  stmt.run(is_featured ? 1 : 0, id);
+export async function toggleFeaturedReview(id: number, is_featured: boolean): Promise<void> {
+  const { error } = await supabase
+    .from('reviews')
+    .update({ is_featured })
+    .eq('id', id);
+
+  if (error) throw error;
 }
 
-export function deleteReview(id: number): void {
-  const db = getDatabase();
-  const stmt = db.prepare('DELETE FROM reviews WHERE id = ?');
-  stmt.run(id);
+export async function deleteReview(id: number): Promise<void> {
+  const { error } = await supabase
+    .from('reviews')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
 }
 
-export function getApprovedReviews(): Review[] {
-  const db = getDatabase();
-  const stmt = db.prepare("SELECT * FROM reviews WHERE status = 'approved' ORDER BY created_at DESC");
-  return stmt.all() as Review[];
+export async function getApprovedReviews(): Promise<Review[]> {
+  const { data, error } = await supabase
+    .from('reviews')
+    .select('*')
+    .eq('status', 'approved')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return (data || []) as Review[];
 }
 
 // ============================================
@@ -559,44 +616,56 @@ export interface Notification {
   created_at?: string;
 }
 
-export function getAllNotifications(limit?: number): Notification[] {
-  const db = getDatabase();
-  let query = 'SELECT * FROM notifications ORDER BY created_at DESC';
-  
+export async function getAllNotifications(limit?: number): Promise<Notification[]> {
+  let query = supabase.from('notifications').select('*').order('created_at', { ascending: false });
+
   if (limit) {
-    query += ` LIMIT ${limit}`;
+    query = query.limit(limit);
   }
-  
-  const stmt = db.prepare(query);
-  return stmt.all() as Notification[];
+
+  const { data, error } = await query;
+
+  if (error) throw error;
+  return (data || []) as Notification[];
 }
 
-export function createNotification(notification: Omit<Notification, 'id' | 'created_at'>): number {
-  const db = getDatabase();
-  const stmt = db.prepare(`
-    INSERT INTO notifications (type, title, message, reference_id, is_read)
-    VALUES (@type, @title, @message, @reference_id, @is_read)
-  `);
-  const result = stmt.run(notification);
-  return result.lastInsertRowid as number;
+export async function createNotification(notification: Omit<Notification, 'id' | 'created_at'>): Promise<number> {
+  const { data, error } = await supabase
+    .from('notifications')
+    .insert([notification])
+    .select('id')
+    .single();
+
+  if (error) throw error;
+  return data?.id || 0;
 }
 
-export function markNotificationAsRead(id: number): void {
-  const db = getDatabase();
-  const stmt = db.prepare('UPDATE notifications SET is_read = 1 WHERE id = ?');
-  stmt.run(id);
+export async function markNotificationAsRead(id: number): Promise<void> {
+  const { error } = await supabase
+    .from('notifications')
+    .update({ is_read: true })
+    .eq('id', id);
+
+  if (error) throw error;
 }
 
-export function markAllNotificationsAsRead(): void {
-  const db = getDatabase();
-  const stmt = db.prepare('UPDATE notifications SET is_read = 1 WHERE is_read = 0');
-  stmt.run();
+export async function markAllNotificationsAsRead(): Promise<void> {
+  const { error } = await supabase
+    .from('notifications')
+    .update({ is_read: true })
+    .eq('is_read', false);
+
+  if (error) throw error;
 }
 
-export function getUnreadNotificationCount(): number {
-  const db = getDatabase();
-  const result = db.prepare('SELECT COUNT(*) as count FROM notifications WHERE is_read = 0').get() as { count: number };
-  return result.count;
+export async function getUnreadNotificationCount(): Promise<number> {
+  const { count, error } = await supabase
+    .from('notifications')
+    .select('*', { count: 'exact', head: true })
+    .eq('is_read', false);
+
+  if (error) throw error;
+  return count || 0;
 }
 
 // ============================================
@@ -610,33 +679,37 @@ export interface Setting {
   updated_at?: string;
 }
 
-export function getSetting(key: string): string | null {
-  const db = getDatabase();
-  const stmt = db.prepare('SELECT setting_value FROM settings WHERE setting_key = ?');
-  const result = stmt.get(key) as Setting | undefined;
-  return result?.setting_value || null;
+export async function getSetting(key: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('settings')
+    .select('setting_value')
+    .eq('setting_key', key)
+    .single();
+
+  if (error && error.code !== 'PGRST116') throw error;
+  return data?.setting_value || null;
 }
 
-export function setSetting(key: string, value: string): void {
-  const db = getDatabase();
-  const stmt = db.prepare(`
-    INSERT INTO settings (setting_key, setting_value) 
-    VALUES (?, ?) 
-    ON CONFLICT(setting_key) DO UPDATE SET setting_value = ?, updated_at = CURRENT_TIMESTAMP
-  `);
-  stmt.run(key, value, value);
+export async function setSetting(key: string, value: string): Promise<void> {
+  const { error } = await supabase
+    .from('settings')
+    .upsert({ setting_key: key, setting_value: value }, { onConflict: 'setting_key' });
+
+  if (error) throw error;
 }
 
-export function getAllSettings(): Record<string, string> {
-  const db = getDatabase();
-  const stmt = db.prepare('SELECT setting_key, setting_value FROM settings');
-  const rows = stmt.all() as Setting[];
-  
+export async function getAllSettings(): Promise<Record<string, string>> {
+  const { data, error } = await supabase
+    .from('settings')
+    .select('setting_key, setting_value');
+
+  if (error) throw error;
+
   const settings: Record<string, string> = {};
-  rows.forEach(row => {
+  (data || []).forEach((row: any) => {
     settings[row.setting_key] = row.setting_value;
   });
-  
+
   return settings;
 }
 
@@ -657,43 +730,52 @@ export interface Staff {
   updated_at?: string;
 }
 
-export function getAllStaff(): Staff[] {
-  const db = getDatabase();
-  const stmt = db.prepare('SELECT * FROM staff ORDER BY name');
-  return stmt.all() as Staff[];
+export async function getAllStaff(): Promise<Staff[]> {
+  const { data, error } = await supabase
+    .from('staff')
+    .select('*')
+    .order('name', { ascending: true });
+
+  if (error) throw error;
+  return (data || []) as Staff[];
 }
 
-export function getStaffById(id: number): Staff | undefined {
-  const db = getDatabase();
-  const stmt = db.prepare('SELECT * FROM staff WHERE id = ?');
-  return stmt.get(id) as Staff | undefined;
+export async function getStaffById(id: number): Promise<Staff | undefined> {
+  const { data, error } = await supabase
+    .from('staff')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error && error.code !== 'PGRST116') throw error;
+  return data as Staff | undefined;
 }
 
-export function createStaff(staff: Omit<Staff, 'id' | 'created_at' | 'updated_at'>): number {
-  const db = getDatabase();
-  const stmt = db.prepare(`
-    INSERT INTO staff (name, role, email, phone, password, is_active, assigned_bookings)
-    VALUES (@name, @role, @email, @phone, @password, @is_active, @assigned_bookings)
-  `);
-  const result = stmt.run(staff);
-  return result.lastInsertRowid as number;
+export async function createStaff(staff: Omit<Staff, 'id' | 'created_at' | 'updated_at'>): Promise<number> {
+  const { data, error } = await supabase
+    .from('staff')
+    .insert([staff])
+    .select('id')
+    .single();
+
+  if (error) throw error;
+  return data?.id || 0;
 }
 
-export function updateStaff(id: number, staff: Partial<Staff>): void {
-  const db = getDatabase();
-  const fields = Object.keys(staff).filter(k => k !== 'id');
-  const setClause = fields.map(f => `${f} = @${f}`).join(', ');
-  
-  const stmt = db.prepare(`
-    UPDATE staff 
-    SET ${setClause}, updated_at = CURRENT_TIMESTAMP
-    WHERE id = @id
-  `);
-  stmt.run({ ...staff, id });
+export async function updateStaff(id: number, staff: Partial<Staff>): Promise<void> {
+  const { error } = await supabase
+    .from('staff')
+    .update(staff)
+    .eq('id', id);
+
+  if (error) throw error;
 }
 
-export function deleteStaff(id: number): void {
-  const db = getDatabase();
-  const stmt = db.prepare('DELETE FROM staff WHERE id = ?');
-  stmt.run(id);
+export async function deleteStaff(id: number): Promise<void> {
+  const { error } = await supabase
+    .from('staff')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
 }

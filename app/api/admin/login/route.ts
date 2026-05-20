@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateToken } from '@/lib/auth';
-import { getDatabase } from '@/lib/db';
-import bcrypt from 'bcryptjs';
+import { getAdminByUsername, verifyAdminPassword, createAdmin } from '@/lib/admin-db';
 
 export async function POST(request: NextRequest) {
     try {
@@ -10,7 +9,6 @@ export async function POST(request: NextRequest) {
 
         // Debug logging
         console.log('Received username:', username);
-        console.log('Received password:', password);
 
         if (!username || !password) {
             return NextResponse.json(
@@ -19,38 +17,24 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Initialize database and create admin_users table if it doesn't exist
-        const db = getDatabase();
-        db.exec(`CREATE TABLE IF NOT EXISTS admin_users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`);
-
-        // Re-initialize default admin with hashed password if needed
-        const existingAdmin = db.prepare('SELECT * FROM admin_users WHERE username = ?').get('admin') as { password: string } | undefined;
-        if (!existingAdmin) {
-            console.log('Creating default admin user with hashed password...');
-            const hashedPassword = await bcrypt.hash('admin123', 10);
-            db.prepare('INSERT INTO admin_users (username, password) VALUES (?, ?)').run('admin', hashedPassword);
-        } else if (existingAdmin.password === 'admin123') {
-            // Migrate plain text password to hashed
-            console.log('Migrating default admin password to hashed format...');
-            const hashedPassword = await bcrypt.hash('admin123', 10);
-            db.prepare('UPDATE admin_users SET password = ? WHERE username = ?').run(hashedPassword, 'admin');
-        }
-
-        // Fetch user from database
-        const user = db.prepare('SELECT * FROM admin_users WHERE username = ?').get(username) as { password: string } | undefined;
+        // Try to get user from database
+        let user = await getAdminByUsername(username);
 
         if (!user) {
-            console.log('User not found:', username);
-            // Fallback to environment variables
+            console.log('User not found, checking environment variables');
+            // Fallback to environment variables for initial admin setup
             const envUsername = process.env.ADMIN_USERNAME || 'admin';
             const envPassword = process.env.ADMIN_PASSWORD || 'admin123';
+            
             if (username === envUsername && password === envPassword) {
                 console.log('Login successful via environment fallback:', username);
+                // Create admin user if not exists
+                try {
+                    await createAdmin(username, password);
+                } catch (e) {
+                    // User might already exist, ignore
+                }
+                
                 const token = generateToken(username);
                 const response = NextResponse.json(
                     { success: true, message: 'Login successful' },
@@ -65,6 +49,7 @@ export async function POST(request: NextRequest) {
                 });
                 return response;
             }
+            
             console.log('Invalid credentials for user:', username);
             return NextResponse.json(
                 { error: 'Invalid credentials' },
@@ -72,12 +57,43 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Compare password with bcrypt
-        console.log('Comparing password with bcrypt...');
-        const isPasswordValid = await bcrypt.compare(password, user.password);
+        // Verify password
+        const isPasswordValid = await verifyAdminPassword(user, password);
 
         if (!isPasswordValid) {
             console.log('Password mismatch for user:', username);
+            return NextResponse.json(
+                { error: 'Invalid credentials' },
+                { status: 401 }
+            );
+        }
+
+        console.log('Login successful:', username);
+        const token = generateToken(username);
+        const response = NextResponse.json(
+            { success: true, message: 'Login successful' },
+            { status: 200 }
+        );
+        response.cookies.set('admin_token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 86400,
+            path: '/',
+        });
+        return response;
+    } catch (error) {
+        console.error('Login error:', error);
+        return NextResponse.json(
+            { error: 'Internal server error' },
+            { status: 500 }
+        );
+    }
+}
+
+export async function GET(request: NextRequest) {
+    return NextResponse.json({ message: 'Method not allowed' }, { status: 405 });
+}
             return NextResponse.json(
                 { error: 'Invalid credentials' },
                 { status: 401 }

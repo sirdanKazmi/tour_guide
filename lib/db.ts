@@ -1,25 +1,4 @@
-import Database from 'better-sqlite3';
-import path from 'path';
-import fs from 'fs';
-
-const dbPath = path.join(process.cwd(), 'tour_guide.db');
-const schemaPath = path.join(process.cwd(), 'lib', 'schema.sql');
-
-let db: Database.Database | null = null;
-
-export function getDatabase(): Database.Database {
-  if (!db) {
-    db = new Database(dbPath);
-    db.pragma('journal_mode = WAL');
-    
-    // Initialize schema if database is new
-    if (fs.existsSync(schemaPath)) {
-      const schema = fs.readFileSync(schemaPath, 'utf-8');
-      db.exec(schema);
-    }
-  }
-  return db;
-}
+import { supabase } from './supabaseClient';
 
 // Video CRUD operations
 export interface Video {
@@ -34,51 +13,65 @@ export interface Video {
   updated_at?: string;
 }
 
-export function getAllVideos(): Video[] {
-  const db = getDatabase();
-  const stmt = db.prepare('SELECT * FROM videos ORDER BY created_at DESC');
-  return stmt.all() as Video[];
-}
-
-export function getVideoById(id: number): Video | undefined {
-  const db = getDatabase();
-  const stmt = db.prepare('SELECT * FROM videos WHERE id = ?');
-  return stmt.get(id) as Video | undefined;
-}
-
-export function getVideosByCategory(category: string): Video[] {
-  const db = getDatabase();
-  const stmt = db.prepare('SELECT * FROM videos WHERE category = ? ORDER BY created_at DESC');
-  return stmt.all(category) as Video[];
-}
-
-export function createVideo(video: Omit<Video, 'id' | 'created_at' | 'updated_at'>): number {
-  const db = getDatabase();
-  const stmt = db.prepare(`
-    INSERT INTO videos (title, description, category, video_url, thumbnail_url, duration)
-    VALUES (@title, @description, @category, @video_url, @thumbnail_url, @duration)
-  `);
-  const result = stmt.run(video);
-  return result.lastInsertRowid as number;
-}
-
-export function updateVideo(id: number, video: Partial<Video>): void {
-  const db = getDatabase();
-  const fields = Object.keys(video).filter(k => k !== 'id');
-  const setClause = fields.map(f => `${f} = @${f}`).join(', ');
+export async function getAllVideos(): Promise<Video[]> {
+  const { data, error } = await supabase
+    .from('videos')
+    .select('*')
+    .order('created_at', { ascending: false });
   
-  const stmt = db.prepare(`
-    UPDATE videos 
-    SET ${setClause}, updated_at = CURRENT_TIMESTAMP
-    WHERE id = @id
-  `);
-  stmt.run({ ...video, id });
+  if (error) throw error;
+  return (data || []) as Video[];
 }
 
-export function deleteVideo(id: number): void {
-  const db = getDatabase();
-  const stmt = db.prepare('DELETE FROM videos WHERE id = ?');
-  stmt.run(id);
+export async function getVideoById(id: number): Promise<Video | undefined> {
+  const { data, error } = await supabase
+    .from('videos')
+    .select('*')
+    .eq('id', id)
+    .single();
+  
+  if (error && error.code !== 'PGRST116') throw error;
+  return data as Video | undefined;
+}
+
+export async function getVideosByCategory(category: string): Promise<Video[]> {
+  const { data, error } = await supabase
+    .from('videos')
+    .select('*')
+    .eq('category', category)
+    .order('created_at', { ascending: false });
+  
+  if (error) throw error;
+  return (data || []) as Video[];
+}
+
+export async function createVideo(video: Omit<Video, 'id' | 'created_at' | 'updated_at'>): Promise<number> {
+  const { data, error } = await supabase
+    .from('videos')
+    .insert([video])
+    .select('id')
+    .single();
+  
+  if (error) throw error;
+  return data?.id || 0;
+}
+
+export async function updateVideo(id: number, video: Partial<Video>): Promise<void> {
+  const { error } = await supabase
+    .from('videos')
+    .update(video)
+    .eq('id', id);
+  
+  if (error) throw error;
+}
+
+export async function deleteVideo(id: number): Promise<void> {
+  const { error } = await supabase
+    .from('videos')
+    .delete()
+    .eq('id', id);
+  
+  if (error) throw error;
 }
 
 // Gallery CRUD operations
@@ -94,52 +87,63 @@ export interface GalleryItem {
   updated_at?: string;
 }
 
-export function getAllGalleryItems(): GalleryItem[] {
-  const db = getDatabase();
-  const stmt = db.prepare('SELECT * FROM gallery_items ORDER BY created_at DESC');
-  return stmt.all() as GalleryItem[];
-}
-
-export function getGalleryItemsByType(type: 'image' | 'video'): GalleryItem[] {
-  const db = getDatabase();
-  const stmt = db.prepare('SELECT * FROM gallery_items WHERE type = ? ORDER BY created_at DESC');
-  return stmt.all(type) as GalleryItem[];
-}
-
-export function getGalleryItemsByCategory(category: string): GalleryItem[] {
-  const db = getDatabase();
-  const stmt = db.prepare('SELECT * FROM gallery_items WHERE category = ? ORDER BY created_at DESC');
-  return stmt.all(category) as GalleryItem[];
-}
-
-export function createGalleryItem(item: Omit<GalleryItem, 'id' | 'created_at' | 'updated_at'>): number {
-  const db = getDatabase();
-  const stmt = db.prepare(`
-    INSERT INTO gallery_items (type, category, title, description, media_url, thumbnail_url)
-    VALUES (@type, @category, @title, @description, @media_url, @thumbnail_url)
-  `);
-  const result = stmt.run(item);
-  return result.lastInsertRowid as number;
-}
-
-export function updateGalleryItem(id: number, item: Partial<GalleryItem>): void {
-  const db = getDatabase();
-  const fields = Object.keys(item).filter(k => k !== 'id');
-  const setClause = fields.map(f => `${f} = @${f}`).join(', ');
+export async function getAllGalleryItems(): Promise<GalleryItem[]> {
+  const { data, error } = await supabase
+    .from('gallery_items')
+    .select('*')
+    .order('created_at', { ascending: false });
   
-  const stmt = db.prepare(`
-    UPDATE gallery_items 
-    SET ${setClause}, updated_at = CURRENT_TIMESTAMP
-    WHERE id = @id
-  `);
-  stmt.run({ ...item, id });
+  if (error) throw error;
+  return (data || []) as GalleryItem[];
 }
 
-export function deleteGalleryItem(id: number): void {
-  const db = getDatabase();
-  const stmt = db.prepare('DELETE FROM gallery_items WHERE id = ?');
-  stmt.run(id);
+export async function getGalleryItemsByType(type: 'image' | 'video'): Promise<GalleryItem[]> {
+  const { data, error } = await supabase
+    .from('gallery_items')
+    .select('*')
+    .eq('type', type)
+    .order('created_at', { ascending: false });
+  
+  if (error) throw error;
+  return (data || []) as GalleryItem[];
 }
 
-// Initialize database on import
-getDatabase();
+export async function getGalleryItemsByCategory(category: string): Promise<GalleryItem[]> {
+  const { data, error } = await supabase
+    .from('gallery_items')
+    .select('*')
+    .eq('category', category)
+    .order('created_at', { ascending: false });
+  
+  if (error) throw error;
+  return (data || []) as GalleryItem[];
+}
+
+export async function createGalleryItem(item: Omit<GalleryItem, 'id' | 'created_at' | 'updated_at'>): Promise<number> {
+  const { data, error } = await supabase
+    .from('gallery_items')
+    .insert([item])
+    .select('id')
+    .single();
+  
+  if (error) throw error;
+  return data?.id || 0;
+}
+
+export async function updateGalleryItem(id: number, item: Partial<GalleryItem>): Promise<void> {
+  const { error } = await supabase
+    .from('gallery_items')
+    .update(item)
+    .eq('id', id);
+  
+  if (error) throw error;
+}
+
+export async function deleteGalleryItem(id: number): Promise<void> {
+  const { error } = await supabase
+    .from('gallery_items')
+    .delete()
+    .eq('id', id);
+  
+  if (error) throw error;
+}

@@ -20,6 +20,7 @@ interface Booking {
     special_requests?: string;
     admin_notes?: string;
     created_at?: string;
+    updated_at?: string;
 }
 
 export default function BookingsPage() {

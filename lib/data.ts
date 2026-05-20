@@ -38,7 +38,7 @@ export interface Testimonial {
 export interface GalleryItem {
   id: number;
   category: string;
-  image: string;
+  image: string[];
 }
 
 export interface TourData {

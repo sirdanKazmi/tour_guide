@@ -95,7 +95,7 @@ const GalleryPageComponent: React.FC<GalleryPageProps> = ({ data }) => {
                 <Card3D intensity={5}>
                   <div className="relative h-full min-h-[200px] md:min-h-[250px]">
                     <motion.img
-                      src={item.image}
+                      src={item.image[0]}
                       alt={`Gallery ${item.id}`}
                       className="w-full h-full object-cover"
                       whileHover={{ scale: 1.1 }}
@@ -197,7 +197,7 @@ const GalleryPageComponent: React.FC<GalleryPageProps> = ({ data }) => {
                 onClick={(e) => e.stopPropagation()}
               >
                 <motion.img
-                  src={lightbox.image}
+                  src={lightbox.image[0]}
                   alt="Lightbox"
                   className="w-full h-auto max-h-[80vh] object-contain rounded-lg shadow-2xl"
                   style={{ transformStyle: 'preserve-3d' }}

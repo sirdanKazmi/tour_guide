@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDatabase } from '@/lib/db';
-import bcrypt from 'bcryptjs';
+import { getAdminByUsername, createAdmin } from '@/lib/admin-db';
 
 // POST create new admin account
 export async function POST(request: NextRequest) {
@@ -24,19 +23,8 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const db = getDatabase();
-        console.log('Database connected');
-
-        // Create admin_users table if it doesn't exist
-        db.exec(`CREATE TABLE IF NOT EXISTS admin_users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`);
-
         // Check if username already exists
-        const existingUser = db.prepare('SELECT id FROM admin_users WHERE username = ?').get(username);
+        const existingUser = await getAdminByUsername(username);
         if (existingUser) {
             console.log('Username already exists:', username);
             return NextResponse.json(
@@ -45,12 +33,9 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Hash password with bcrypt before storing
-        const hashedPassword = await bcrypt.hash(password, 10);
+        // Create new admin
         console.log('Creating new admin:', { username });
-        db.prepare(
-            'INSERT INTO admin_users (username, password) VALUES (?, ?)'
-        ).run(username, hashedPassword);
+        await createAdmin(username, password);
 
         console.log('Admin created successfully');
         return NextResponse.json(
@@ -58,6 +43,19 @@ export async function POST(request: NextRequest) {
             { status: 201 }
         );
     } catch (error) {
+        console.error('Registration error:', error);
+        if (error instanceof Error && error.message.includes('duplicate key')) {
+            return NextResponse.json(
+                { error: 'Username already exists' },
+                { status: 400 }
+            );
+        }
+        return NextResponse.json(
+            { error: 'Internal server error' },
+            { status: 500 }
+        );
+    }
+}
         console.error('Error creating admin account:', error);
         return NextResponse.json(
             { error: 'Failed to create account: ' + (error as Error).message },
