@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, Video, Image, LogOut, Menu, X, PlaneTakeoff, Compass, Users, Mail, DollarSign, Star, Settings, Shield } from 'lucide-react';
+import { LayoutDashboard, Video, Image, LogOut, Menu, X, PlaneTakeoff, Compass, Users, Mail, DollarSign, Star, Settings, Shield, Car, Plane } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
@@ -63,6 +63,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         { href: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
         { href: '/admin/bookings', icon: PlaneTakeoff, label: 'Bookings' },
         { href: '/admin/tours', icon: Compass, label: 'Tour Packages' },
+        { href: '/admin/vehicles', icon: Car, label: 'Car Rental' },
+        { href: '/admin/by-air', icon: Plane, label: 'By-Air Packages' },
         { href: '/admin/customers', icon: Users, label: 'Customers' },
         { href: '/admin/inquiries', icon: Mail, label: 'Inquiries' },
         { href: '/admin/revenue', icon: DollarSign, label: 'Revenue' },

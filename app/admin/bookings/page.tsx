@@ -6,12 +6,16 @@ import { toast } from 'sonner';
 
 interface Booking {
     id: number;
+    reference?: string;
+    booking_type?: 'tour' | 'vehicle' | 'custom' | 'by_air';
     customer_name: string;
     customer_email: string;
     customer_phone: string;
     customer_cnic?: string;
     tour_name: string;
     travel_date: string;
+    duration_days?: number;
+    rooms?: number;
     people_count: number;
     price_per_person: number;
     total_price: number;
@@ -126,9 +130,11 @@ export default function BookingsPage() {
     };
 
     const handleExportCSV = () => {
-        const headers = ['ID', 'Customer Name', 'Email', 'Phone', 'Tour', 'Travel Date', 'People', 'Amount', 'Booking Status', 'Payment Status', 'Created At'];
+        const headers = ['ID', 'Reference', 'Type', 'Customer Name', 'Email', 'Phone', 'Item', 'Travel Date', 'People', 'Amount', 'Booking Status', 'Payment Status', 'Created At'];
         const csvData = bookings.map(b => [
             b.id,
+            b.reference || '',
+            b.booking_type || 'tour',
             b.customer_name,
             b.customer_email,
             b.customer_phone,
@@ -398,7 +404,17 @@ export default function BookingsPage() {
                     <div className="bg-slate-800 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
                         {/* Modal Header */}
                         <div className="sticky top-0 bg-slate-800 border-b border-slate-700 p-6 flex items-center justify-between">
-                            <h3 className="text-2xl font-bold text-white">Booking #{selectedBooking.id}</h3>
+                            <div>
+                                <h3 className="text-2xl font-bold text-white">Booking #{selectedBooking.id}</h3>
+                                <div className="flex items-center gap-2 mt-1">
+                                    {selectedBooking.reference && (
+                                        <span className="text-sky-400 font-mono text-sm tracking-wider">{selectedBooking.reference}</span>
+                                    )}
+                                    <span className="px-2 py-0.5 rounded bg-slate-700 text-gray-300 text-xs capitalize">
+                                        {(selectedBooking.booking_type || 'tour').replace('_', ' ')}
+                                    </span>
+                                </div>
+                            </div>
                             <button onClick={() => setShowModal(false)} className="p-2 hover:bg-slate-700 rounded-lg">
                                 <X className="w-5 h-5 text-gray-400" />
                             </button>

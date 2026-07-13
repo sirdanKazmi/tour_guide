@@ -62,13 +62,15 @@ const Footer: React.FC = () => {
 
   const quickLinks = [
     { name: 'Home', href: '/' },
+    { name: 'Tours', href: '/tours' },
     { name: 'Destinations', href: '/destinations/gilgit-baltistan' },
-    { name: 'About Us', href: '/about' },
-    { name: 'Gallery', href: '/gallery' },
+    { name: 'Car Rental', href: '/car-rental' },
+    { name: 'By Air', href: '/by-air' },
     { name: 'Contact', href: '/contact' },
   ];
 
   const supportLinks = [
+    { name: 'Track Booking', href: '/track' },
     { name: 'FAQ', href: '/faq' },
     { name: 'Terms of Service', href: '/terms' },
     { name: 'Privacy Policy', href: '/privacy' },

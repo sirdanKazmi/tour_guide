@@ -66,18 +66,45 @@ export async function POST(request: NextRequest) {
 
         const id = await createTour({
             tour_name,
+            slug: body.slug,
             destination,
             category,
+            travel_mode: body.travel_mode || 'By Road',
             description,
             duration,
+            duration_days: body.duration_days ? parseInt(body.duration_days) : undefined,
+            duration_nights: body.duration_nights ? parseInt(body.duration_nights) : undefined,
             price_per_person: parseFloat(price_per_person),
             max_seats: parseInt(max_seats),
             available_seats: parseInt(available_seats) || parseInt(max_seats),
             departure_city,
+            rating: body.rating ? parseFloat(body.rating) : undefined,
+            is_featured: !!body.is_featured,
+            urgency_badge: body.urgency_badge || undefined,
+            group_size: body.group_size || undefined,
+            accommodation_summary: body.accommodation_summary || undefined,
+            meals_summary: body.meals_summary || undefined,
             inclusions,
             exclusions,
             itinerary,
+            itinerary_json: body.itinerary_json || undefined,
+            pricing_tiers: body.pricing_tiers || undefined,
+            gallery: body.gallery || undefined,
+            related_tour_ids: body.related_tour_ids || undefined,
             cover_image,
+            sort_order: body.sort_order ? parseInt(body.sort_order) : 0,
+            itinerary_code: body.itinerary_code || undefined,
+            transport_label: body.transport_label || undefined,
+            availability: body.availability || undefined,
+            highlights: body.highlights || undefined,
+            videos: body.videos || undefined,
+            tags: body.tags || undefined,
+            map_lat: body.map_lat ? parseFloat(body.map_lat) : undefined,
+            map_lng: body.map_lng ? parseFloat(body.map_lng) : undefined,
+            map_embed_url: body.map_embed_url || undefined,
+            meta_title: body.meta_title || undefined,
+            meta_description: body.meta_description || undefined,
+            meta_keywords: body.meta_keywords || undefined,
             status: status || 'active',
         });
 
@@ -103,6 +130,11 @@ export async function PUT(request: NextRequest) {
         }
 
         const body = await request.json();
+        // Coerce numeric fields when present
+        ['price_per_person', 'rating', 'map_lat', 'map_lng'].forEach((k) => { if (body[k] !== undefined && body[k] !== '') body[k] = parseFloat(body[k]); });
+        ['max_seats', 'available_seats', 'duration_days', 'duration_nights', 'sort_order'].forEach((k) => { if (body[k] !== undefined && body[k] !== '') body[k] = parseInt(body[k]); });
+        if (body.is_featured !== undefined) body.is_featured = !!body.is_featured;
+
         await updateTour(parseInt(id), body);
 
         return NextResponse.json({ success: true });

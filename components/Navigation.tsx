@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, Sun, Moon, Plane, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 
 const Navigation: React.FC = () => {
@@ -55,30 +54,34 @@ const Navigation: React.FC = () => {
     }
 
     try {
-      // Insert booking directly into Supabase with exact column names
-      const { data, error } = await supabase
-        .from('bookings')
-        .insert([
-          { 
-            customer_name: formData.get('name'),
-            email: formData.get('email'),
-            phone: formData.get('phone'),
-            tour_name: formData.get('tour'),
-            travel_date: formData.get('date') || new Date().toISOString().split('T')[0],
-          }
-        ]);
+      // Submit through the public bookings API (handles reference generation + validation)
+      const response = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          booking_type: 'tour',
+          item_name: formData.get('tour'),
+          customer_name: formData.get('name'),
+          customer_email: formData.get('email'),
+          customer_phone: formData.get('phone'),
+          travel_date: formData.get('date') || new Date().toISOString().split('T')[0],
+          people_count: formData.get('people') || 1,
+          special_requests: formData.get('message') || undefined,
+        }),
+      });
 
-      if (error) {
-        console.error('Supabase error:', error);
-        toast.error('Failed to submit booking. Please try again.');
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error('Booking error:', data);
+        toast.error(data.error || 'Failed to submit booking. Please try again.');
         return;
       }
 
-      console.log('Booking submitted successfully:', data);
-      toast.success('Booking submitted successfully! We will contact you soon.');
+      toast.success(`Booking submitted! Your reference is ${data.reference}. We will contact you soon.`);
       setBookingModalOpen(false);
       setFormErrors({});
-      
+
       // Reset form after a small delay to ensure modal closes first
       setTimeout(() => {
         if (form) {
@@ -122,9 +125,11 @@ const Navigation: React.FC = () => {
 
   const navLinks = [
     { name: 'Home', label: 'Home', href: '/' },
+    { name: 'Tours', label: 'Tours', href: '/tours' },
+    { name: 'CarRental', label: 'Car Rental', href: '/car-rental' },
+    { name: 'ByAir', label: 'By Air', href: '/by-air' },
     { name: 'About', label: 'About', href: '/about' },
     { name: 'Gallery', label: 'Gallery', href: '/gallery' },
-    { name: 'Videos', label: 'Videos', href: '/videos' },
     { name: 'Contact', label: 'Contact', href: '/contact' },
   ];
 

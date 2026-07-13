@@ -47,22 +47,54 @@ export async function verifyAdminPassword(admin: AdminUser, password: string): P
 
 export interface Booking {
   id?: number;
+  reference?: string;
+  booking_type?: 'tour' | 'vehicle' | 'custom' | 'by_air';
   customer_name: string;
   customer_email: string;
   customer_phone: string;
   customer_cnic?: string;
   tour_name: string;
   tour_id?: number;
+  vehicle_id?: number;
+  by_air_id?: number;
+  package_option_id?: number;
+  option_code?: string;
   travel_date: string;
+  duration_days?: number;
   people_count: number;
+  rooms?: number;
+  selected_tier?: string;
+  add_vehicle?: string;
   price_per_person: number;
   total_price: number;
   payment_status: 'unpaid' | 'partial' | 'paid';
   booking_status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
   special_requests?: string;
   admin_notes?: string;
+  source?: 'web' | 'whatsapp';
   created_at?: string;
   updated_at?: string;
+}
+
+// Generate a human-friendly booking reference in the form "SFM-XXXXXXX"
+export function generateBookingReference(): string {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no ambiguous chars (0/O, 1/I)
+  let code = '';
+  for (let i = 0; i < 7; i += 1) {
+    code += alphabet[Math.floor(Math.random() * alphabet.length)];
+  }
+  return `SFM-${code}`;
+}
+
+export async function getBookingByReference(reference: string): Promise<Booking | undefined> {
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('*')
+    .eq('reference', reference.trim().toUpperCase())
+    .maybeSingle();
+
+  if (error && error.code !== 'PGRST116') throw error;
+  return (data || undefined) as Booking | undefined;
 }
 
 export async function getAllBookings(filters?: {
@@ -164,21 +196,69 @@ export async function getPendingBookings(): Promise<Booking[]> {
 export interface Tour {
   id?: number;
   tour_name: string;
+  slug?: string;
   destination: string;
-  category: 'adventure' | 'family' | 'honeymoon' | 'group' | 'religious';
-  description?: string;
+  category: string;
+  travel_mode?: string;              // 'By Road' | 'By Air'
+  description?: string;              // trip overview
   duration: string;
-  price_per_person: number;
+  duration_days?: number;
+  duration_nights?: number;
+  price_per_person: number;          // starting price
   max_seats: number;
   available_seats: number;
   departure_city: string;
+  rating?: number;
+  is_featured?: boolean;
+  urgency_badge?: string;
+  group_size?: string;
+  accommodation_summary?: string;
+  meals_summary?: string;
   inclusions?: string;
   exclusions?: string;
-  itinerary?: string;
+  itinerary?: string;                // legacy plain-text itinerary
+  itinerary_json?: string;           // JSON [{day_no,title,description,activities[]}]
+  pricing_tiers?: string;            // JSON [{name,blurb,price,is_popular}] (simple tours)
+  gallery?: string;                  // JSON [url]
+  related_tour_ids?: string;         // JSON [id]
   cover_image?: string;
+  sort_order?: number;
+  // rich "as per need" fields
+  itinerary_code?: string;
+  transport_label?: string;
+  availability?: string;
+  highlights?: string;               // JSON []
+  videos?: string;                   // JSON [{title,youtube_id}]
+  tags?: string;                     // JSON [] tag names
+  map_lat?: number;
+  map_lng?: number;
+  map_embed_url?: string;
+  meta_title?: string;
+  meta_description?: string;
+  meta_keywords?: string;
   status: 'active' | 'inactive' | 'coming_soon';
   created_at?: string;
   updated_at?: string;
+}
+
+function tourSlugify(input: string): string {
+  return input.toLowerCase().trim().replace(/['"]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80);
+}
+
+async function uniqueTourSlug(base: string, ignoreId?: number): Promise<string> {
+  const root = tourSlugify(base) || 'tour';
+  let candidate = root;
+  let n = 1;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    let query = supabase.from('tours').select('id').eq('slug', candidate);
+    if (ignoreId) query = query.neq('id', ignoreId);
+    const { data, error } = await query.maybeSingle();
+    if (error && error.code !== 'PGRST116') throw error;
+    if (!data) return candidate;
+    n += 1;
+    candidate = `${root}-${n}`;
+  }
 }
 
 export async function getAllTours(filters?: {
@@ -218,9 +298,10 @@ export async function getTourById(id: number): Promise<Tour | undefined> {
 }
 
 export async function createTour(tour: Omit<Tour, 'id' | 'created_at' | 'updated_at'>): Promise<number> {
+  const slug = await uniqueTourSlug(tour.slug || tour.tour_name);
   const { data, error } = await supabase
     .from('tours')
-    .insert([tour])
+    .insert([{ ...tour, slug }])
     .select('id')
     .single();
 
@@ -229,9 +310,16 @@ export async function createTour(tour: Omit<Tour, 'id' | 'created_at' | 'updated
 }
 
 export async function updateTour(id: number, tour: Partial<Tour>): Promise<void> {
+  const payload = { ...tour };
+  // Keep slug stable for SEO: only change it when a non-empty slug is explicitly provided.
+  if (!payload.slug) {
+    delete payload.slug;
+  } else {
+    payload.slug = await uniqueTourSlug(payload.slug, id);
+  }
   const { error } = await supabase
     .from('tours')
-    .update(tour)
+    .update(payload)
     .eq('id', id);
 
   if (error) throw error;
@@ -253,6 +341,73 @@ export async function getActiveTours(): Promise<Tour[]> {
     .eq('status', 'active')
     .order('tour_name', { ascending: true });
 
+  if (error) throw error;
+  return (data || []) as Tour[];
+}
+
+export async function getTourBySlug(slug: string): Promise<Tour | undefined> {
+  const { data, error } = await supabase.from('tours').select('*').eq('slug', slug).maybeSingle();
+  if (error && error.code !== 'PGRST116') throw error;
+  return (data || undefined) as Tour | undefined;
+}
+
+export async function getFeaturedTours(limit = 6): Promise<Tour[]> {
+  const { data, error } = await supabase
+    .from('tours')
+    .select('*')
+    .eq('status', 'active')
+    .eq('is_featured', true)
+    .order('sort_order', { ascending: true })
+    .limit(limit);
+  if (error) throw error;
+  return (data || []) as Tour[];
+}
+
+export interface TourFilters {
+  category?: string;
+  destination?: string;
+  travel_mode?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  minDays?: number;
+  maxDays?: number;
+  sort?: 'popular' | 'price_asc' | 'price_desc' | 'rating';
+}
+
+// Public, active-only tour listing with server-side filtering + sorting.
+export async function getPublicTours(filters: TourFilters = {}): Promise<Tour[]> {
+  let query = supabase.from('tours').select('*').eq('status', 'active');
+
+  if (filters.category) query = query.ilike('category', filters.category);
+  if (filters.destination) query = query.ilike('destination', filters.destination);
+  if (filters.travel_mode) query = query.eq('travel_mode', filters.travel_mode);
+  if (filters.minPrice != null) query = query.gte('price_per_person', filters.minPrice);
+  if (filters.maxPrice != null) query = query.lte('price_per_person', filters.maxPrice);
+  if (filters.minDays != null) query = query.gte('duration_days', filters.minDays);
+  if (filters.maxDays != null) query = query.lte('duration_days', filters.maxDays);
+
+  switch (filters.sort) {
+    case 'price_asc':
+      query = query.order('price_per_person', { ascending: true });
+      break;
+    case 'price_desc':
+      query = query.order('price_per_person', { ascending: false });
+      break;
+    case 'rating':
+      query = query.order('rating', { ascending: false });
+      break;
+    default: // popular
+      query = query.order('is_featured', { ascending: false }).order('sort_order', { ascending: true });
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data || []) as Tour[];
+}
+
+export async function getToursByIds(ids: number[]): Promise<Tour[]> {
+  if (!ids.length) return [];
+  const { data, error } = await supabase.from('tours').select('*').in('id', ids).eq('status', 'active');
   if (error) throw error;
   return (data || []) as Tour[];
 }
@@ -535,6 +690,16 @@ export interface Review {
   tour_name: string;
   rating: number;
   review_text?: string;
+  review_title?: string;
+  trip_type?: string;
+  country?: string;
+  city?: string;
+  score_accommodation?: number;
+  score_transport?: number;
+  score_meals?: number;
+  score_guide?: number;
+  score_value?: number;
+  score_accuracy?: number;
   status: 'pending' | 'approved' | 'rejected';
   is_featured: boolean;
   created_at?: string;
