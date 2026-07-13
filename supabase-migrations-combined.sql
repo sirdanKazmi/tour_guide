@@ -1,9 +1,9 @@
 -- ============================================================
 -- COMBINED MIGRATION — run once in Supabase SQL Editor.
--- Order: fleet -> tours -> packages. Safe to re-run (idempotent).
+-- Order: fleet -> tours -> packages -> tags. Idempotent (safe to re-run).
 -- ============================================================
 
--- ===== 1/3: supabase-migration-fleet.sql =====
+-- ===== 1/4: supabase-migration-fleet.sql =====
 -- =====================================================
 -- MIGRATION: Car Rental (Vehicles) + By-Air Packages + unified Bookings
 -- Additive & idempotent. Safe to run on an existing database.
@@ -145,7 +145,7 @@ VALUES
   ('Gilgit by Air — 5 Days Hunza Special', 'gilgit-by-air-5-days-hunza', 'Gilgit', '1 hr', '16 hrs', 5, 4, 99000, 'Direct flight to Gilgit, then straight to the Hunza valley — Attabad Lake, Passu Cones and Khunjerab Pass.', FALSE, 'Only 3 slots left this month', 'active', 2)
 ON CONFLICT (slug) DO NOTHING;
 
--- ===== 2/3: supabase-migration-tours.sql =====
+-- ===== 2/4: supabase-migration-tours.sql =====
 -- =====================================================
 -- MIGRATION: Tours commerce + SEO upgrade
 -- Additive & idempotent. Safe to run on an existing database.
@@ -224,7 +224,7 @@ INSERT INTO tours (
 )
 ON CONFLICT (slug) DO NOTHING;
 
--- ===== 3/3: supabase-migration-packages.sql =====
+-- ===== 3/4: supabase-migration-packages.sql =====
 -- =====================================================
 -- MIGRATION: Flexible package model (Apricot-style)
 -- Additive & idempotent. Safe to run on an existing database.
@@ -341,11 +341,16 @@ CROSS JOIN (VALUES
   (NULL, 'Budget',   'By road', 'per_person', NULL, NULL, 1, 165000, 'Toyota Corolla with fuel & driver', '[{"area":"Naran","nights":2,"hotel":"Standard hotel"},{"area":"Skardu","nights":3,"hotel":"Snowland Hotel"},{"area":"Hunza","nights":3,"hotel":"Hunza View Hotel"},{"area":"Gilgit","nights":1,"hotel":"Gilgit City hotel"}]', '["Vehicle with driver","Hotels","Daily breakfast"]', '["Meals","Tickets"]', '[]', 1),
   (NULL, 'Standard', 'By road', 'per_person', NULL, NULL, 1, 235000, 'Toyota Prado with fuel & driver', '[{"area":"Naran","nights":2,"hotel":"Maisonette Hotel & Resort"},{"area":"Skardu","nights":3,"hotel":"Shangrila Resort"},{"area":"Hunza","nights":3,"hotel":"Hunza Serena Inn"},{"area":"Gilgit","nights":1,"hotel":"Gilgit Serena Hotel"}]', '["Prado with driver","4★ hotels","Daily breakfast"]', '["Meals","Tickets"]', '["Local music program"]', 2),
   (NULL, 'Luxury',   'By road', 'per_person', NULL, NULL, 1, 389500, 'Toyota Land Cruiser V8 with fuel & driver', '[{"area":"Naran","nights":2,"hotel":"Maisonette (premium)"},{"area":"Skardu","nights":3,"hotel":"Serena (Shigar & Khaplu)"},{"area":"Hunza","nights":3,"hotel":"Hunza Serena Inn"},{"area":"Gilgit","nights":1,"hotel":"Gilgit Serena Hotel"}]', '["Land Cruiser with driver","5★ hotels","Daily breakfast","Toll, parking, driver food & stay"]', '["Meals","Park & fort tickets"]', '["Local music program"]', 3),
-  -- Private & Family price grid (per group, party bands)
-  ('TRAVEL-151', 'Budget',   'By road', 'per_group', 2, 3, 1, 184500, 'Toyota Prado with fuel & driver',      '[{"area":"Skardu","nights":3,"hotel":"Snowland Hotel"},{"area":"Hunza","nights":3,"hotel":"Hunza View Hotel"}]', '["Vehicle with driver","Hotels","Daily breakfast"]', '["Meals","Tickets"]', '[]', 4),
-  ('TRAVEL-154', 'Standard', 'By road', 'per_group', 4, 6, 2, 284500, 'Toyota Grand Cabin + jeep with driver', '[{"area":"Skardu","nights":3,"hotel":"Shangrila Resort"},{"area":"Hunza","nights":3,"hotel":"Hunza Serena Inn"}]', '["Van + jeep with driver","Hotels","Daily breakfast","Guide"]', '["Meals","Tickets"]', '["Local music program"]', 5),
-  ('TRAVEL-157', 'Luxury',   'By road', 'per_group', 4, 6, 2, 389500, 'Toyota Prado (2001-07) with fuel & local driver', '[{"area":"Naran","nights":2,"hotel":"Maisonette Hotel & Resort"},{"area":"Skardu","nights":3,"hotel":"Serena (Shigar & Khaplu)"},{"area":"Hunza","nights":3,"hotel":"Hunza Serena Inn"},{"area":"Gilgit","nights":1,"hotel":"Gilgit Serena Hotel"}]', '["Toll taxes, parking, driver food & stay"]', '["Meals","Park & fort tickets"]', '["Local music program"]', 6),
-  ('TRAVEL-159', 'Luxury',   'By road', 'per_group', 7, 12, 4, 620000, 'Coaster Saloon + Land Cruiser with drivers', '[{"area":"Skardu","nights":3,"hotel":"Serena (Shigar & Khaplu)"},{"area":"Hunza","nights":3,"hotel":"Hunza Serena Inn"}]', '["Coaster + Land Cruiser","5★ hotels","Guide","Toll, parking, driver food & stay"]', '["Meals","Park & fort tickets"]', '["Local music program"]', 7)
+  -- Private & Family price grid (per group, party bands) — full 9-row TRAVEL grid
+  ('TRAVEL-151', 'Budget',   'By road', 'per_group', 2, 3,  1, 184500, 'Toyota Prado with fuel & driver',            '[{"area":"Skardu","nights":3,"hotel":"Snowland Hotel"},{"area":"Hunza","nights":3,"hotel":"Hunza View Hotel"}]', '["Vehicle with driver","Hotels","Daily breakfast"]', '["Meals","Tickets"]', '[]', 4),
+  ('TRAVEL-152', 'Standard', 'By road', 'per_group', 2, 3,  1, 224500, 'Toyota Prado with fuel & driver',            '[{"area":"Skardu","nights":3,"hotel":"Shangrila Resort"},{"area":"Hunza","nights":3,"hotel":"Hunza Serena Inn"}]', '["Prado with driver","4★ hotels","Daily breakfast"]', '["Meals","Tickets"]', '[]', 5),
+  ('TRAVEL-153', 'Luxury',   'By road', 'per_group', 2, 3,  1, 299500, 'Toyota Land Cruiser V8 with fuel & driver',  '[{"area":"Skardu","nights":3,"hotel":"Serena (Shigar & Khaplu)"},{"area":"Hunza","nights":3,"hotel":"Hunza Serena Inn"}]', '["Land Cruiser with driver","5★ hotels","Daily breakfast","Toll & parking"]', '["Meals","Park & fort tickets"]', '["Local music program"]', 6),
+  ('TRAVEL-154', 'Standard', 'By road', 'per_group', 4, 6,  2, 284500, 'Toyota Grand Cabin + jeep with driver',      '[{"area":"Skardu","nights":3,"hotel":"Shangrila Resort"},{"area":"Hunza","nights":3,"hotel":"Hunza Serena Inn"}]', '["Van + jeep with driver","Hotels","Daily breakfast","Guide"]', '["Meals","Tickets"]', '["Local music program"]', 7),
+  ('TRAVEL-155', 'Budget',   'By road', 'per_group', 4, 6,  2, 244500, 'Toyota Grand Cabin with driver',             '[{"area":"Skardu","nights":3,"hotel":"Snowland Hotel"},{"area":"Hunza","nights":3,"hotel":"Hunza View Hotel"}]', '["Van with driver","Hotels","Daily breakfast"]', '["Meals","Tickets"]', '[]', 8),
+  ('TRAVEL-157', 'Luxury',   'By road', 'per_group', 4, 6,  2, 389500, 'Toyota Prado (2001-07) with fuel & local driver', '[{"area":"Naran","nights":2,"hotel":"Maisonette Hotel & Resort"},{"area":"Skardu","nights":3,"hotel":"Serena (Shigar & Khaplu)"},{"area":"Hunza","nights":3,"hotel":"Hunza Serena Inn"},{"area":"Gilgit","nights":1,"hotel":"Gilgit Serena Hotel"}]', '["Toll taxes, parking, driver food & stay"]', '["Meals","Park & fort tickets"]', '["Local music program"]', 9),
+  ('TRAVEL-156', 'Budget',   'By road', 'per_group', 7, 12, 4, 434500, 'Coaster Saloon with driver',                 '[{"area":"Skardu","nights":3,"hotel":"Snowland Hotel"},{"area":"Hunza","nights":3,"hotel":"Hunza View Hotel"}]', '["Coaster with driver","Hotels","Daily breakfast","Guide"]', '["Meals","Tickets"]', '[]', 10),
+  ('TRAVEL-158', 'Standard', 'By road', 'per_group', 7, 12, 4, 529500, 'Coaster Saloon + jeep with drivers',         '[{"area":"Skardu","nights":3,"hotel":"Shangrila Resort"},{"area":"Hunza","nights":3,"hotel":"Hunza Serena Inn"}]', '["Coaster + jeep","4★ hotels","Guide"]', '["Meals","Tickets"]', '["Local music program"]', 11),
+  ('TRAVEL-159', 'Luxury',   'By road', 'per_group', 7, 12, 4, 620000, 'Coaster Saloon + Land Cruiser with drivers', '[{"area":"Skardu","nights":3,"hotel":"Serena (Shigar & Khaplu)"},{"area":"Hunza","nights":3,"hotel":"Hunza Serena Inn"}]', '["Coaster + Land Cruiser","5★ hotels","Guide","Toll, parking, driver food & stay"]', '["Meals","Park & fort tickets"]', '["Local music program"]', 12)
 ) AS v(code, tier, transport_mode, price_unit, min_persons, max_persons, rooms, price, vehicle_text, hotels, included, not_included, extras, sort_order)
 WHERE t.slug = 'gilgit-baltistan-10-days'
   AND NOT EXISTS (SELECT 1 FROM package_options po WHERE po.tour_id = t.id);
@@ -354,3 +359,52 @@ WHERE t.slug = 'gilgit-baltistan-10-days'
 INSERT INTO reviews (customer_name, tour_name, rating, review_title, review_text, trip_type, country, city, status, is_featured, score_accommodation, score_transport, score_meals, score_guide, score_value, score_accuracy)
 SELECT 'Ayesha & Bilal', 'Gilgit Baltistan Tour Package (10 Days)', 5, 'Perfect honeymoon', 'Flawless from start to finish — the driver knew every viewpoint and the Serena stays were superb.', 'Honeymoon', 'Pakistan', 'Lahore', 'approved', TRUE, 5, 4.5, 4, 5, 4.5, 5
 WHERE NOT EXISTS (SELECT 1 FROM reviews r WHERE r.tour_name = 'Gilgit Baltistan Tour Package (10 Days)' AND r.customer_name = 'Ayesha & Bilal');
+
+-- ===== 4/4: supabase-migration-tags.sql =====
+-- =====================================================
+-- MIGRATION: Normalized tags (TourTag + tour_tags M2M)
+-- Additive & idempotent. Run AFTER supabase-migration-packages.sql
+-- (it backfills from the tours.tags JSON cache added there).
+-- =====================================================
+
+-- Tag definitions
+CREATE TABLE IF NOT EXISTS tags (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE,
+  slug TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tour <-> Tag many-to-many
+CREATE TABLE IF NOT EXISTS tour_tags (
+  tour_id INTEGER NOT NULL REFERENCES tours(id) ON DELETE CASCADE,
+  tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+  PRIMARY KEY (tour_id, tag_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_tour_tags_tour ON tour_tags(tour_id);
+CREATE INDEX IF NOT EXISTS idx_tour_tags_tag ON tour_tags(tag_id);
+
+-- RLS (matches project convention)
+ALTER TABLE tags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tour_tags ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Enable all for anon on tags" ON tags;
+CREATE POLICY "Enable all for anon on tags" ON tags FOR ALL TO anon USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Enable all for anon on tour_tags" ON tour_tags;
+CREATE POLICY "Enable all for anon on tour_tags" ON tour_tags FOR ALL TO anon USING (true) WITH CHECK (true);
+
+-- Backfill from the tours.tags JSON cache (only array-shaped values).
+INSERT INTO tags (name, slug)
+SELECT DISTINCT trim(elem), lower(regexp_replace(trim(elem), '[^a-zA-Z0-9]+', '-', 'g'))
+FROM tours t
+CROSS JOIN LATERAL jsonb_array_elements_text(t.tags::jsonb) AS elem
+WHERE t.tags IS NOT NULL AND t.tags LIKE '[%' AND trim(elem) <> ''
+ON CONFLICT (name) DO NOTHING;
+
+INSERT INTO tour_tags (tour_id, tag_id)
+SELECT t.id, tg.id
+FROM tours t
+CROSS JOIN LATERAL jsonb_array_elements_text(t.tags::jsonb) AS elem
+JOIN tags tg ON tg.name = trim(elem)
+WHERE t.tags IS NOT NULL AND t.tags LIKE '[%'
+ON CONFLICT (tour_id, tag_id) DO NOTHING;

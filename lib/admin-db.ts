@@ -367,6 +367,7 @@ export interface TourFilters {
   category?: string;
   destination?: string;
   travel_mode?: string;
+  tag?: string;
   minPrice?: number;
   maxPrice?: number;
   minDays?: number;
@@ -377,6 +378,13 @@ export interface TourFilters {
 // Public, active-only tour listing with server-side filtering + sorting.
 export async function getPublicTours(filters: TourFilters = {}): Promise<Tour[]> {
   let query = supabase.from('tours').select('*').eq('status', 'active');
+
+  if (filters.tag) {
+    const { getTourIdsByTag } = await import('./tags-db');
+    const ids = await getTourIdsByTag(filters.tag);
+    if (!ids.length) return [];
+    query = query.in('id', ids);
+  }
 
   if (filters.category) query = query.ilike('category', filters.category);
   if (filters.destination) query = query.ilike('destination', filters.destination);

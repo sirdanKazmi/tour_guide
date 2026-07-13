@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Compass, MessageCircle } from 'lucide-react';
 import { getPublicTours, getActiveTours, TourFilters as TF, Tour } from '@/lib/admin-db';
+import { getAllTags } from '@/lib/tags-db';
 import TourCard from '@/components/tours/TourCard';
 import TourFilters from '@/components/tours/TourFilters';
 import { initialData } from '@/lib/data';
@@ -31,6 +32,7 @@ function buildFilters(sp: Record<string, string | string[] | undefined>): TF {
   const cat = first(sp.cat);
   const destination = first(sp.destination);
   const mode = first(sp.mode);
+  const tag = first(sp.tag);
   const dur = first(sp.dur);
   const sort = first(sp.sort) as TF['sort'];
   const min = first(sp.min);
@@ -39,6 +41,7 @@ function buildFilters(sp: Record<string, string | string[] | undefined>): TF {
   if (cat) filters.category = cat;
   if (destination) filters.destination = destination;
   if (mode) filters.travel_mode = mode;
+  if (tag) filters.tag = tag;
   if (sort) filters.sort = sort;
   if (min) filters.minPrice = parseInt(min);
   if (max) filters.maxPrice = parseInt(max);
@@ -65,6 +68,8 @@ export default async function ToursPage({ searchParams }: Props) {
   // Facets from the full active set
   const categories = Array.from(new Set(allActive.map((t) => t.category).filter(Boolean))) as string[];
   const destinations = Array.from(new Set(allActive.map((t) => t.destination).filter(Boolean))) as string[];
+  let tagList: string[] = [];
+  try { tagList = (await getAllTags()).map((t) => t.name); } catch (e) { console.error('Failed to load tags:', e); }
   const wa = initialData.guide.whatsapp;
 
   const jsonLd = {
@@ -94,7 +99,7 @@ export default async function ToursPage({ searchParams }: Props) {
       </section>
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-        <TourFilters categories={categories} destinations={destinations} />
+        <TourFilters categories={categories} destinations={destinations} tags={tagList} />
 
         {tours.length === 0 ? (
           <div className="text-center py-16">

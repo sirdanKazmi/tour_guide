@@ -18,7 +18,7 @@ const SORTS = [
   { key: 'rating', label: 'Top rated' },
 ];
 
-export default function TourFilters({ categories, destinations }: { categories: string[]; destinations: string[] }) {
+export default function TourFilters({ categories, destinations, tags = [] }: { categories: string[]; destinations: string[]; tags?: string[] }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -27,6 +27,7 @@ export default function TourFilters({ categories, destinations }: { categories: 
     cat: searchParams.get('cat') || '',
     destination: searchParams.get('destination') || '',
     mode: searchParams.get('mode') || '',
+    tag: searchParams.get('tag') || '',
     dur: searchParams.get('dur') || '',
     sort: searchParams.get('sort') || 'popular',
   };
@@ -42,7 +43,7 @@ export default function TourFilters({ categories, destinations }: { categories: 
     [router, pathname, searchParams]
   );
 
-  const hasFilters = current.cat || current.destination || current.mode || current.dur;
+  const hasFilters = current.cat || current.destination || current.mode || current.dur || current.tag;
 
   return (
     <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 shadow-sm">
@@ -73,6 +74,22 @@ export default function TourFilters({ categories, destinations }: { categories: 
               className={`rounded-full px-3 py-1.5 text-xs font-semibold capitalize transition-colors ${current.cat.toLowerCase() === c.toLowerCase() ? 'bg-sky-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'}`}
             >
               {c}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Tag chips */}
+      {tags.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          <span className="text-xs font-medium text-slate-400 self-center mr-1">Tags:</span>
+          {tags.map((tg) => (
+            <button
+              key={tg}
+              onClick={() => setParam('tag', current.tag.toLowerCase() === tg.toLowerCase() ? '' : tg)}
+              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${current.tag.toLowerCase() === tg.toLowerCase() ? 'bg-sky-500 text-white' : 'bg-sky-50 dark:bg-sky-900/20 text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/40'}`}
+            >
+              {tg}
             </button>
           ))}
         </div>

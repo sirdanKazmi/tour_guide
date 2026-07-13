@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 import {
     getAllReviews,
+    createReview,
     updateReviewStatus,
     deleteReview,
     toggleFeaturedReview,
@@ -12,6 +13,43 @@ function verifyAdmin(request: NextRequest): boolean {
     if (!token) return false;
     const user = verifyToken(token);
     return user !== null;
+}
+
+// POST create a review (incl. multi-dimension scores + trip context)
+export async function POST(request: NextRequest) {
+    try {
+        if (!verifyAdmin(request)) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        const body = await request.json();
+        const { customer_name, tour_name, rating } = body;
+        if (!customer_name || !tour_name || !rating) {
+            return NextResponse.json({ error: 'customer_name, tour_name and rating are required' }, { status: 400 });
+        }
+        const num = (v: any) => (v === '' || v === undefined || v === null ? undefined : parseFloat(v));
+        const id = await createReview({
+            customer_name,
+            tour_name,
+            rating: parseInt(rating),
+            review_text: body.review_text || undefined,
+            review_title: body.review_title || undefined,
+            trip_type: body.trip_type || undefined,
+            country: body.country || undefined,
+            city: body.city || undefined,
+            score_accommodation: num(body.score_accommodation),
+            score_transport: num(body.score_transport),
+            score_meals: num(body.score_meals),
+            score_guide: num(body.score_guide),
+            score_value: num(body.score_value),
+            score_accuracy: num(body.score_accuracy),
+            status: body.status || 'approved',
+            is_featured: !!body.is_featured,
+        });
+        return NextResponse.json({ success: true, id }, { status: 201 });
+    } catch (error: any) {
+        console.error('Error creating review:', error);
+        return NextResponse.json({ error: `Failed to create review: ${error.message || 'Unknown error'}` }, { status: 500 });
+    }
 }
 
 // GET all reviews

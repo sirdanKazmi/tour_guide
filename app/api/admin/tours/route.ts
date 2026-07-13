@@ -7,12 +7,24 @@ import {
     updateTour,
     deleteTour,
 } from '@/lib/admin-db';
+import { setTagsForTour } from '@/lib/tags-db';
 
 function verifyAdmin(request: NextRequest): boolean {
     const token = request.cookies.get('admin_token')?.value;
     if (!token) return false;
     const user = verifyToken(token);
     return user !== null;
+}
+
+// Parse the tour form's `tags` field (JSON array string or comma list) into names.
+function parseTagNames(v: unknown): string[] {
+    if (Array.isArray(v)) return v.map((x) => String(x));
+    if (typeof v === 'string') {
+        const s = v.trim();
+        if (s.startsWith('[')) { try { const a = JSON.parse(s); return Array.isArray(a) ? a.map(String) : []; } catch { /* fall through */ } }
+        return s.split(',').map((x) => x.trim()).filter(Boolean);
+    }
+    return [];
 }
 
 // GET all tours
@@ -108,6 +120,10 @@ export async function POST(request: NextRequest) {
             status: status || 'active',
         });
 
+        if (body.tags !== undefined) {
+            try { await setTagsForTour(id, parseTagNames(body.tags)); } catch (e) { console.error('Tag sync failed:', e); }
+        }
+
         return NextResponse.json({ success: true, id }, { status: 201 });
     } catch (error) {
         console.error('Error creating tour:', error);
@@ -136,6 +152,10 @@ export async function PUT(request: NextRequest) {
         if (body.is_featured !== undefined) body.is_featured = !!body.is_featured;
 
         await updateTour(parseInt(id), body);
+
+        if (body.tags !== undefined) {
+            try { await setTagsForTour(parseInt(id), parseTagNames(body.tags)); } catch (e) { console.error('Tag sync failed:', e); }
+        }
 
         return NextResponse.json({ success: true });
     } catch (error) {
